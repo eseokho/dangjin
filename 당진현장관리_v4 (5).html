@@ -1,0 +1,2921 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0d1117">
+<title>당진 현장관리</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#0d1117;--bg2:#161b22;--bg3:#1c2130;--border:#2d333b;
+  --primary:#f59e0b;--pdim:rgba(245,158,11,.15);
+  --blue:#3b82f6;--bdim:rgba(59,130,246,.15);
+  --green:#10b981;--gdim:rgba(16,185,129,.15);
+  --red:#ef4444;--rdim:rgba(239,68,68,.15);
+  --text:#e6edf3;--text2:#8b949e;--text3:#4d5566;
+  --r:12px;--nav:80px;--header:64px;
+  --c-hj:#10b981;--c-ck:#f59e0b;--c-sj:#3b82f6;
+}
+/* ⑦ 글씨 1.2배 → 17px */
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-serif;font-size:17px;-webkit-font-smoothing:antialiased;overscroll-behavior:none}
+#app{height:100dvh;display:flex;flex-direction:column;overflow:hidden}
+
+/* ── 헤더 ── */
+.header{height:var(--header);background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;gap:12px;flex-shrink:0;z-index:100}
+.header-title{font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;letter-spacing:.3px;flex:1;cursor:pointer}
+.header-title span{color:var(--primary)}
+.header-sub{font-size:13px;color:var(--text3);margin-top:1px}
+.hbtn{width:44px;height:44px;border:none;background:transparent;color:var(--text2);border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
+.hbtn:active{background:var(--bg3)}
+.hbtn svg{width:22px;height:22px}
+
+/* ── 하단 내비 ── */
+.bottom-nav{height:var(--nav);background:var(--bg2);border-top:1px solid var(--border);display:flex;align-items:center;flex-shrink:0;z-index:600}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;padding:6px 0;color:var(--text3);border:none;background:transparent;font-family:'Noto Sans KR',sans-serif}
+.nav-item.active{color:var(--primary)}
+.nav-item svg{width:24px;height:24px}
+.nav-item span{font-size:12px;font-weight:500}
+
+/* ── 뷰 ── */
+.main{flex:1;overflow:hidden;position:relative}
+.view{position:absolute;inset:0;overflow-y:auto;display:none;padding-bottom:8px}
+.view.active{display:block}
+
+/* ── 설정 화면 ── */
+#setup-screen{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px}
+#setup-screen.hidden{display:none}
+.setup-logo{font-family:'Barlow Condensed',sans-serif;font-size:60px;font-weight:800;color:var(--primary);margin-bottom:6px;text-align:center}
+.setup-title{font-size:20px;font-weight:700;margin-bottom:6px;text-align:center}
+.setup-desc{font-size:15px;color:var(--text2);text-align:center;line-height:1.7;margin-bottom:24px}
+.setup-step{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:12px;width:100%;font-size:14px;color:var(--text2);line-height:2}
+.setup-step strong{color:var(--text);display:block;margin-bottom:4px;font-size:15px}
+.setup-input{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-size:15px;color:var(--text);font-family:'Noto Sans KR',sans-serif;outline:none;margin-bottom:10px}
+.setup-input:focus{border-color:var(--primary)}
+.setup-btn{width:100%;height:52px;background:var(--primary);color:#000;border:none;border-radius:12px;font-size:17px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif}
+.setup-skip{margin-top:12px;font-size:13px;color:var(--text3);text-align:center;cursor:pointer;text-decoration:underline}
+
+/* ── 홈 뷰 ── */
+.view-header{padding:16px 16px 0}
+.today-label{font-size:14px;color:var(--text2);margin-bottom:4px}
+.today-date{font-family:'Barlow Condensed',sans-serif;font-size:34px;font-weight:800;margin-bottom:12px}
+.today-date span{color:var(--primary)}
+
+/* ⑥ 지역 2줄 그리드 */
+.region-grid{display:flex;flex-wrap:wrap;gap:7px;padding:0 16px 12px}
+.region-btn{height:38px;padding:0 16px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--text2);font-size:14px;font-weight:500;cursor:pointer;white-space:nowrap;font-family:'Noto Sans KR',sans-serif}
+.region-btn.active{background:var(--primary);border-color:var(--primary);color:#000;font-weight:700}
+.region-btn.active-all{background:#dc2626;border-color:#dc2626;color:#fff;font-weight:700}
+.rec-count-bar{display:flex;align-items:center;justify-content:space-between;padding:0 16px 10px}
+.rec-count{font-size:14px;color:var(--text2)}
+.rec-count strong{color:var(--primary);font-size:17px}
+.cards{padding:0 16px;padding-bottom:calc(var(--nav)+70px)}
+
+/* ── 필터 탭 공통 ── */
+.filter-row{display:flex;flex-wrap:wrap;gap:7px;padding:10px 16px 6px}
+.ftab{height:36px;padding:0 14px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--text2);font-size:14px;font-weight:500;cursor:pointer;white-space:nowrap;font-family:'Noto Sans KR',sans-serif;transition:all .15s}
+.ftab.active{border-color:transparent;font-weight:700}
+.ftab-hj.active{background:var(--c-hj);color:#fff}
+.ftab-ck.active{background:var(--c-ck);color:#000}
+.ftab-sj.active{background:var(--c-sj);color:#fff}
+.ftab-all.active{background:#dc2626;color:#fff;border-color:#dc2626}
+/* 상태 탭 */
+.ftab-st0.active{background:rgba(139,148,158,.3);color:var(--text)}
+.ftab-st1.active{background:rgba(245,158,11,.25);color:var(--primary)}
+.ftab-st2.active{background:rgba(59,130,246,.25);color:var(--blue)}
+.ftab-st3.active{background:rgba(16,185,129,.25);color:var(--green)}
+.ftab-st4.active{background:rgba(249,115,22,.2);color:#f97316}
+/* 공사종류 탭 */
+.ftab-wt.active{background:rgba(139,68,210,.25);color:#c084fc}
+.filter-label{font-size:12px;color:var(--text3);padding:8px 16px 2px;font-weight:600;letter-spacing:.5px;text-transform:uppercase}
+
+/* ── 검색 ── */
+.search-wrap{padding:0 16px 8px;position:relative}
+.search-ico{position:absolute;left:28px;top:50%;transform:translateY(-50%);color:var(--text3);pointer-events:none}
+.search-in{width:100%;height:44px;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:0 12px 0 40px;font-size:15px;color:var(--text);font-family:'Noto Sans KR',sans-serif;outline:none}
+.search-in:focus{border-color:var(--primary)}
+.list-cards{padding:0 16px 80px}
+
+/* ── 카드 ── */
+.site-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);margin-bottom:12px;overflow:visible;transition:border-color .15s;position:relative}
+.site-card.selected{border-color:var(--primary);box-shadow:0 0 0 1px var(--primary)}
+.site-card.completed{opacity:.38}
+.site-card.completed .card-bottom{opacity:1} /* 상태 배지는 항상 선명하게 */
+.site-card.completed .status-wrap{opacity:1;position:relative;z-index:1}
+.card-stripe{height:6px;width:100%;border-radius:var(--r) var(--r) 0 0}
+.stripe-high{background:linear-gradient(90deg,var(--red),#ff6b6b)}
+.stripe-active{background:linear-gradient(90deg,var(--green),#34d399)}
+.stripe-normal{background:var(--border)}
+.stripe-hj{background:var(--c-hj)}
+.stripe-ck{background:var(--c-ck)}
+.stripe-sj{background:var(--c-sj)}
+.card-top{display:flex;align-items:flex-start;padding:12px 12px 8px;gap:12px;cursor:pointer}
+.card-check{width:26px;height:26px;border-radius:6px;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;margin-top:2px;transition:all .15s;background:transparent;position:relative;z-index:1}
+.card-check.checked{background:var(--primary);border-color:var(--primary)}
+.card-check.checked::after{content:'✓';font-size:14px;font-weight:700;color:#000;position:absolute}
+.card-body{flex:1;min-width:0}
+.type-label{display:inline-flex;align-items:center;justify-content:center;border-radius:6px;font-size:13px;font-weight:700;padding:3px 12px;flex-shrink:0;margin-bottom:6px}
+.tl-hj{background:var(--c-hj);color:#fff}
+.tl-ck{background:var(--c-ck);color:#000}
+.tl-sj{background:var(--c-sj);color:#fff}
+.card-name{font-size:16px;font-weight:600;line-height:1.35;margin-bottom:4px;word-break:keep-all}
+.card-addr{font-size:13px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:6px}
+.badges{display:flex;gap:6px;flex-wrap:wrap;position:relative;z-index:2}
+.badge{font-size:12px;font-weight:600;padding:3px 10px;border-radius:20px;white-space:nowrap}
+.b-blue{background:var(--bdim);color:var(--blue)}
+.b-amber{background:var(--pdim);color:var(--primary)}
+.b-green{background:var(--gdim);color:var(--green)}
+.b-red{background:var(--rdim);color:var(--red)}
+.b-gray{background:rgba(139,148,158,.12);color:var(--text2)}
+.b-urgent{animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.card-bottom{padding:0 12px 8px}
+.period-info{font-size:13px;color:var(--text3);line-height:1.6;margin-bottom:8px}
+.period-info strong{color:var(--text2)}
+/* ── 상태 버튼 두 줄 ── */
+.status-row{padding:0 12px 10px}
+.status-pill{transition:all .15s;opacity:1}
+.status-pill.st-unknown{background:rgba(139,68,210,.2);color:#c084fc}
+.status-pill.st-unconf{background:rgba(239,68,68,.2);color:#f87171}
+.status-pill.st-before{background:rgba(107,114,128,.2);color:var(--text2)}
+.status-pill.st-working{background:rgba(245,158,11,.2);color:var(--primary)}
+.status-pill.st-done{background:rgba(59,130,246,.2);color:var(--blue)}
+.status-pill.st-supported{background:rgba(16,185,129,.2);color:var(--green)}
+.status-pill.st-sup0p{background:rgba(234,179,8,.2);color:#eab308}
+.status-pill.st-sup1{background:rgba(245,158,11,.2);color:var(--primary)}
+.status-pill.st-sup2p{background:rgba(249,115,22,.2);color:#f97316}
+.status-pill.st-sup2{background:rgba(245,158,11,.2);color:var(--primary)}
+.status-pill.st-sup3p{background:rgba(168,85,247,.2);color:#a855f7}
+.status-pill.st-sup3{background:rgba(245,158,11,.2);color:var(--primary)}
+.st-btn.st-unknown{background:rgba(139,68,210,.12);color:#c084fc}
+.st-btn.st-unconf{background:rgba(239,68,68,.12);color:#f87171}
+.st-btn.st-before{background:rgba(139,148,158,.15);color:var(--text2)}
+.st-btn.st-working{background:rgba(245,158,11,.15);color:var(--primary)}
+.st-btn.st-done{background:rgba(59,130,246,.15);color:var(--blue)}
+.st-btn.st-supported{background:rgba(16,185,129,.12);color:var(--green)}
+.st-btn.st-unknown.active{background:#7c3aed;color:#fff}
+.st-btn.st-unconf.active{background:#ef4444;color:#fff}
+.st-btn.st-before.active{background:#6b7280;color:#fff}
+.st-btn.st-working.active{background:var(--primary);color:#000}
+.st-btn.st-done.active{background:var(--blue);color:#fff}
+.st-btn.st-supported.active{background:var(--green);color:#fff}
+.st-btn.st-sup0p{background:rgba(234,179,8,.12);color:#eab308}
+.st-btn.st-sup0p.active{background:#eab308;color:#000}
+.st-btn.st-sup1{background:rgba(245,158,11,.12);color:var(--primary)}
+.st-btn.st-sup1.active{background:var(--primary);color:#000}
+.st-btn.st-sup2p{background:rgba(249,115,22,.12);color:#f97316}
+.st-btn.st-sup2p.active{background:#f97316;color:#fff}
+.st-btn.st-sup2{background:rgba(245,158,11,.12);color:var(--primary)}
+.st-btn.st-sup2.active{background:var(--primary);color:#000}
+.st-btn.st-sup3p{background:rgba(168,85,247,.12);color:#a855f7}
+.st-btn.st-sup3p.active{background:#a855f7;color:#fff}
+.st-btn.st-sup3{background:rgba(245,158,11,.12);color:var(--primary)}
+.st-btn.st-sup3.active{background:var(--primary);color:#000}
+.nearby-km{flex:1;height:44px;border-radius:10px;border:2px solid var(--border);background:transparent;color:var(--text2);font-size:16px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;transition:all .15s}
+.nearby-km.active{background:var(--primary);border-color:var(--primary);color:#000}
+.priority-btn{height:26px;padding:0 10px;border-radius:6px;border:1.5px solid var(--border);background:transparent;color:var(--text3);font-size:11px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;white-space:nowrap;transition:all .15s;flex-shrink:0}
+.priority-btn.on{background:rgba(234,179,8,.2);border-color:#ca8a04;color:#ca8a04}
+.sd-item{display:flex;align-items:center;gap:8px;padding:16px 18px;font-size:17px;font-weight:700;cursor:pointer;border:none;background:transparent;width:100%;font-family:'Noto Sans KR',sans-serif;color:var(--text2);text-align:left}
+.sd-item:hover,.sd-item:active{background:var(--bg3)}
+.sd-item.active{color:var(--text)}
+
+/* ── 선택 바 ── */
+.sel-bar{position:fixed;bottom:var(--nav);left:0;right:0;z-index:500;background:var(--bg2);border-top:1px solid var(--primary);padding:10px 16px;display:flex;gap:10px;align-items:center;transform:translateY(100%);transition:transform .25s ease;pointer-events:none}
+.sel-bar.show{transform:translateY(0);pointer-events:auto}
+.sel-info{flex:1;font-size:15px;color:var(--text2)}
+.sel-info strong{color:var(--primary);font-size:18px}
+.sel-clear{height:42px;padding:0 14px;border:1px solid var(--border);background:transparent;color:var(--text2);border-radius:10px;font-size:14px;cursor:pointer;font-family:'Noto Sans KR',sans-serif}
+.sel-route{height:42px;padding:0 18px;background:var(--primary);color:#000;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;display:flex;align-items:center;gap:6px}
+
+/* ── 설정 뷰 ── */
+.settings-body{padding:16px}
+.sg-title{font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px}
+.si{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:14px;display:flex;align-items:center;gap:14px;cursor:pointer;margin-bottom:8px}
+.si:active{border-color:var(--primary)}
+.si-icon{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.si-icon.amber{background:var(--pdim)}.si-icon.blue{background:var(--bdim)}.si-icon.green{background:var(--gdim)}.si-icon.red{background:var(--rdim)}.si-icon.purple{background:rgba(139,68,210,.15)}
+.si-text{flex:1}
+.si-text strong{font-size:15px;font-weight:600;display:block;margin-bottom:2px}
+.si-text small{font-size:13px;color:var(--text2)}
+.url-display{font-size:11px;color:var(--text3);word-break:break-all;margin-top:3px;font-family:monospace}
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px}
+.stat-box{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:12px;text-align:center}
+.stat-n{font-family:'Barlow Condensed',sans-serif;font-size:36px;font-weight:800;color:var(--primary)}
+.stat-l{font-size:12px;color:var(--text2);margin-top:2px}
+
+/* ④ 방문기준 설정 */
+.criteria-editor{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:10px}
+.criteria-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.criteria-row:last-child{margin-bottom:0}
+.criteria-label{font-size:13px;color:var(--text2);width:90px;flex-shrink:0}
+.criteria-val{font-size:14px;font-weight:700;color:var(--primary);width:40px;text-align:center;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:4px 0}
+
+/* ── 공통 ── */
+.empty{text-align:center;padding:50px 20px;color:var(--text3)}
+.empty svg{width:44px;height:44px;margin:0 auto 12px;opacity:.25;display:block}
+.empty p{font-size:15px;line-height:1.8}
+.loading{text-align:center;padding:60px 20px;color:var(--text3)}
+.spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--primary);border-radius:50%;margin:0 auto 12px;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── 경로 모달 ── */
+.route-modal{position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.75);display:flex;flex-direction:column;justify-content:flex-end}
+.route-modal.hidden{display:none}
+.route-sheet{background:var(--bg2);border-radius:20px 20px 0 0;padding:18px;border-top:1px solid var(--border);max-height:88vh;overflow-y:auto}
+.route-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 14px}
+.route-title{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:800;margin-bottom:4px}
+.route-sub{font-size:14px;color:var(--text2);margin-bottom:14px}
+
+/* ── 상세 모달 ── */
+.detail-modal{position:fixed;inset:0;z-index:8000;background:var(--bg);transform:translateY(100%);transition:transform .3s ease;overflow-y:auto}
+.detail-modal.open{transform:translateY(0)}
+.dm-header{display:flex;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border);gap:12px;position:sticky;top:0;background:var(--bg);z-index:10}
+.dm-back{width:40px;height:40px;border:none;background:transparent;color:var(--text2);display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:8px}
+.dm-back svg{width:22px;height:22px}
+.dm-title{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:700;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dm-done{height:36px;padding:0 12px;border:1px solid var(--green);color:var(--green);background:transparent;border-radius:8px;font-size:14px;cursor:pointer;font-family:'Noto Sans KR',sans-serif;font-weight:600;flex-shrink:0}
+.dm-body{padding:16px}
+.dm-section{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:12px}
+.dm-sec-title{font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px}
+.dm-row{display:flex;gap:8px;margin-bottom:7px}
+.dm-row:last-child{margin-bottom:0}
+.dm-key{font-size:13px;color:var(--text3);min-width:68px;flex-shrink:0;padding-top:1px}
+.dm-val{font-size:15px;color:var(--text);flex:1;word-break:break-all;line-height:1.4}
+.dm-period-bar{height:5px;background:var(--bg3);border-radius:3px;overflow:hidden;margin-top:8px}
+.dm-period-fill{height:100%;background:var(--green);border-radius:3px}
+
+/* ⑤ 메모 */
+.memo-row{display:flex;gap:8px;margin-bottom:8px;align-items:flex-start}
+.memo-date{font-size:14px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:6px 8px;color:var(--text2);width:180px;flex-shrink:0;font-family:'Noto Sans KR',sans-serif;outline:none}
+.memo-date:focus{border-color:var(--primary)}
+.memo-text{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--text);font-size:14px;font-family:'Noto Sans KR',sans-serif;outline:none;resize:none;min-height:36px}
+.memo-text:focus{border-color:var(--primary)}
+.memo-del{width:28px;height:28px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--text3);cursor:pointer;flex-shrink:0;font-size:14px;display:flex;align-items:center;justify-content:center;margin-top:4px}
+.memo-del:active{border-color:var(--red);color:var(--red)}
+.memo-add{height:34px;padding:0 14px;background:transparent;border:1px dashed var(--border);border-radius:8px;color:var(--text3);font-size:13px;cursor:pointer;font-family:'Noto Sans KR',sans-serif;width:100%;margin-top:4px}
+.memo-add:active{border-color:var(--green);color:var(--green)}
+
+/* ── 토스트 ── */
+.toast{position:fixed;bottom:calc(var(--nav)+14px);left:50%;transform:translateX(-50%) translateY(16px);background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:10px 18px;border-radius:20px;font-size:14px;z-index:99999;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;white-space:nowrap;max-width:90vw;text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<!-- 최초 설정 화면 -->
+<!-- 비밀번호 잠금 화면 -->
+<div id="lock-screen" style="position:fixed;inset:0;z-index:99999;background:#0f1117;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px">
+  <div style="font-size:48px;margin-bottom:16px">🔒</div>
+  <div style="font-family:'Barlow Condensed',sans-serif;font-size:32px;font-weight:800;color:#f0f0f0;margin-bottom:6px">당진시 현장관리</div>
+  <div style="font-size:14px;color:#888;margin-bottom:32px">접근 비밀번호를 입력하세요</div>
+  <input id="lock-input" type="password" placeholder="비밀번호"
+    style="width:100%;max-width:320px;height:52px;border-radius:12px;border:2px solid #333;background:#1a1d23;color:#f0f0f0;font-size:18px;padding:0 18px;text-align:center;letter-spacing:4px;outline:none;margin-bottom:12px;font-family:'Noto Sans KR',sans-serif"
+    onkeydown="if(event.key==='Enter')checkPassword()">
+  <button onclick="checkPassword()"
+    style="width:100%;max-width:320px;height:52px;border-radius:12px;border:none;background:#f0b429;color:#000;font-size:17px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif">
+    입력
+  </button>
+  <div id="lock-error" style="margin-top:14px;font-size:14px;color:#ef4444;height:20px"></div>
+</div>
+
+<div id="setup-screen">
+  <div class="setup-logo">🏗️</div>
+  <div class="setup-title">당진시 현장관리 앱</div>
+  <div class="setup-desc">구글 앱스스크립트 배포 URL을 입력하면<br>구글 시트 데이터와 자동 연동됩니다.</div>
+  <div class="setup-step">
+    <strong>📋 설정 순서</strong>
+    1. 구글 시트 → 확장 프로그램 → Apps Script<br>
+    2. 제공된 코드 붙여넣기 후 저장<br>
+    3. 배포 → 새 배포 → 웹 앱 → 액세스: 모든 사용자<br>
+    4. 배포 URL 복사 후 아래에 입력
+  </div>
+  <input class="setup-input" id="setup-url" type="text" placeholder="https://script.google.com/macros/s/.../exec" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+  <button class="setup-btn" onclick="saveSetup()">연결 시작</button>
+  <div class="setup-skip" onclick="skipSetup()">테스트 모드로 시작 (데이터 없이)</div>
+</div>
+
+<div id="app">
+  <div class="header">
+    <div style="flex:1;min-width:0" onclick="showView('rec')">
+      <div class="header-title" id="header-title-text">🏠 <span>당진</span> 현장관리</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:1px">
+        <div class="header-sub" id="header-sub">초기화 중...</div>
+        <div id="header-officer" style="font-size:12px;color:var(--text3)"></div>
+      </div>
+    </div>
+    <button class="hbtn" onclick="refreshData()">
+      <svg id="refresh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+    </button>
+    <button class="hbtn" onclick="showView('settings')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+    </button>
+  </div>
+
+  <div class="main">
+    <!-- ① 홈 -->
+    <div class="view active" id="view-rec">
+      <div class="view-header">
+        <div class="today-label">오늘의 방문 일정</div>
+        <div class="today-date" id="today-date">-</div>
+      </div>
+      <div class="filter-row">
+        <button class="ftab ftab-all active" id="rftab-all" onclick="recToggleAll()">전체</button>
+        <button class="ftab ftab-hj active" id="rftab-hj" onclick="recToggleType('hyunjang')">현장발굴</button>
+        <button class="ftab ftab-ck active" id="rftab-ck" onclick="recToggleType('chakgong')">착공신고</button>
+        <button class="ftab ftab-sj active" id="rftab-sj" onclick="recToggleType('sanJae')">산재가입</button>
+      </div>
+      <!-- ⑥ 지역 2줄 그리드 -->
+      <div class="region-grid" id="region-grid"></div>
+      <div class="rec-count-bar">
+        <div class="rec-count">우선 방문 필요 현장 <strong id="rec-count">0</strong>개</div>
+        <button onclick="selectScheduledOnly()" style="height:34px;padding:0 14px;background:rgba(249,115,22,.15);color:#f97316;border:1px solid #f97316;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Noto Sans KR',sans-serif">📅 방문예정 선택</button>
+      </div>
+      <div class="cards" id="rec-cards"></div>
+    </div>
+
+    <!-- ② 전체목록 -->
+    <div class="view" id="view-list">
+      <!-- 유형 -->
+      <div class="filter-row" id="list-type-tabs">
+        <button class="ftab ftab-all" id="ftab-all" onclick="toggleAll()">전체</button>
+        <button class="ftab ftab-hj active" id="ftab-hj" onclick="toggleType('hyunjang')">현장발굴</button>
+        <button class="ftab ftab-ck active" id="ftab-ck" onclick="toggleType('chakgong')">착공신고</button>
+        <button class="ftab ftab-sj active" id="ftab-sj" onclick="toggleType('sanJae')">산재가입</button>
+      </div>
+      <!-- ① 현장상태 필터 -->
+      <div class="filter-label">현장 상태</div>
+      <div class="filter-row" id="list-status-tabs">
+        <button class="ftab ftab-all" id="fst-all" onclick="toggleStatusAll()">전체</button>
+        <button class="ftab ftab-st0 active" id="fst-u" onclick="toggleStatus('미확인')">❓ 미확인</button>
+        <button class="ftab ftab-st0 active" id="fst-uc" onclick="toggleStatus('확인불가')">🚫 확인불가</button>
+        <button class="ftab ftab-st0 active" id="fst-0" onclick="toggleStatus('공사전')">🔲 공사전</button>
+        <button class="ftab ftab-st1 active" id="fst-1" onclick="toggleStatus('공사중')">🔨 공사중</button>
+        <button class="ftab ftab-st4 active" id="fst-4" onclick="toggleStatus('추가지원')">📅 추가지원</button>
+        <button class="ftab ftab-st2" id="fst-2" onclick="toggleStatus('공사완료')">✅ 공사완료</button>
+        <button class="ftab ftab-st3" id="fst-3" onclick="toggleStatus('지원완료')">🎯 지원완료</button>
+      </div>
+      <!-- ② 공사종류 필터 -->
+      <div class="filter-label">공사 종류</div>
+      <div class="filter-row" id="list-work-tabs">
+        <button class="ftab ftab-all active" id="fwt-all" onclick="toggleWorkAll()">전체</button>
+        <button class="ftab ftab-wt active" id="fwt-0" onclick="toggleWork('긴급공사')">🚨 긴급공사</button>
+        <button class="ftab ftab-wt active" id="fwt-1" onclick="toggleWork('인테리어신축')">🏗️ 인테리어</button>
+        <button class="ftab ftab-wt active" id="fwt-2" onclick="toggleWork('리모델링철거')">🔧 리모델링/철거</button>
+        <button class="ftab ftab-wt active" id="fwt-3" onclick="toggleWork('외벽방수')">🏠 외벽/방수</button>
+        <button class="ftab ftab-wt active" id="fwt-4" onclick="toggleWork('전기소방')">⚡ 전기소방</button>
+        <button class="ftab ftab-wt active" id="fwt-5" onclick="toggleWork('일반공사')">🔩 일반공사</button>
+      </div>
+      <!-- ⑥ 지역 2줄 -->
+      <div class="filter-label">지역</div>
+      <div class="region-grid" id="list-region-grid"></div>
+      <div class="search-wrap">
+        <svg class="search-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        <input class="search-in" id="list-search" type="text" placeholder="현장명, 주소 검색..." oninput="renderList()">
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 16px 8px">
+        <div id="list-count-bar" style="font-size:14px;color:var(--text2)">전체 <strong style="color:var(--primary);font-size:16px" id="list-count">0</strong>개</div>
+        <div style="display:flex;gap:7px">
+          <button onclick="selectAllVisible('list')" style="height:34px;padding:0 14px;background:var(--bdim);color:var(--blue);border:1px solid var(--blue);border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Noto Sans KR',sans-serif">전체선택</button>
+          <button onclick="openRouteModal()" style="height:34px;padding:0 14px;background:var(--primary);color:#000;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;display:flex;align-items:center;gap:5px">🗺️ 경로보기</button>
+        </div>
+      </div>
+      <div class="list-cards" id="list-cards"></div>
+    </div>
+
+    <!-- ④ 주변 현장 검색 -->
+    <div class="view" id="view-nearby">
+      <div class="view-header" style="padding-bottom:8px">
+        <div class="today-label">주변 현장 검색</div>
+        <div id="nearby-gps-status" style="font-size:13px;color:var(--text3);margin-bottom:10px;display:flex;align-items:center;gap:8px">
+          <span id="nearby-gps-text">📡 GPS 수신 중...</span>
+          <button onclick="initNearbySearch()" style="font-size:12px;padding:3px 10px;border:1px solid var(--border);border-radius:6px;background:transparent;color:var(--text2);cursor:pointer;font-family:'Noto Sans KR',sans-serif">🔄 재시도</button>
+        </div>
+        <!-- 반경 선택 -->
+        <div style="display:flex;gap:6px;margin-bottom:8px">
+          <button class="nearby-km active" id="nkm-1" onclick="setNearbyKm(1)">1km</button>
+          <button class="nearby-km" id="nkm-2" onclick="setNearbyKm(2)">2km</button>
+          <button class="nearby-km" id="nkm-3" onclick="setNearbyKm(3)">3km</button>
+          <button class="nearby-km" id="nkm-5" onclick="setNearbyKm(5)">5km</button>
+          <button class="nearby-km" id="nkm-10" onclick="setNearbyKm(10)">10km</button>
+        </div>
+        <!-- 유형 필터 -->
+        <div style="display:flex;gap:6px;margin-bottom:6px">
+          <button class="ftab ftab-all active" id="nft-all" onclick="nearbyToggleAll()" style="height:32px;font-size:13px">전체</button>
+          <button class="ftab ftab-hj active" id="nft-hj" onclick="nearbyToggleType('hyunjang')" style="height:32px;font-size:13px">현장발굴</button>
+          <button class="ftab ftab-ck active" id="nft-ck" onclick="nearbyToggleType('chakgong')" style="height:32px;font-size:13px">착공신고</button>
+          <button class="ftab ftab-sj active" id="nft-sj" onclick="nearbyToggleType('sanJae')" style="height:32px;font-size:13px">산재가입</button>
+        </div>
+        <!-- 상태 필터 -->
+        <div style="display:flex;gap:5px;flex-wrap:wrap">
+          <button class="ftab ftab-st0 active" id="nst-u" onclick="nearbyToggleStatus('미확인')" style="height:30px;font-size:12px">❓미확인</button>
+          <button class="ftab ftab-st0 active" id="nst-uc" onclick="nearbyToggleStatus('확인불가')" style="height:30px;font-size:12px">🚫확인불가</button>
+          <button class="ftab ftab-st0 active" id="nst-0" onclick="nearbyToggleStatus('공사전')" style="height:30px;font-size:12px">🔲공사전</button>
+          <button class="ftab ftab-st1 active" id="nst-1" onclick="nearbyToggleStatus('공사중')" style="height:30px;font-size:12px">🔨공사중</button>
+          <button class="ftab ftab-st4 active" id="nst-4" onclick="nearbyToggleStatus('추가지원')" style="height:30px;font-size:12px">📅추가지원</button>
+          <button class="ftab ftab-st2" id="nst-2" onclick="nearbyToggleStatus('공사완료')" style="height:30px;font-size:12px">✅공사완료</button>
+          <button class="ftab ftab-st3" id="nst-3" onclick="nearbyToggleStatus('지원완료')" style="height:30px;font-size:12px">🎯지원완료</button>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 16px 8px">
+        <div style="font-size:14px;color:var(--text2)">반경 내 현장 <strong style="color:var(--primary);font-size:16px" id="nearby-count">0</strong>개</div>
+        <button onclick="selectAllVisible('nearby')" style="height:34px;padding:0 14px;background:var(--bdim);color:var(--blue);border:1px solid var(--blue);border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Noto Sans KR',sans-serif">전체선택</button>
+      </div>
+      <div class="cards" id="nearby-cards" style="padding-bottom:calc(var(--nav)+70px)"></div>
+    </div>
+    <!-- ⑤ 기술지원 참고자료 -->
+    <div class="view" id="view-tech">
+      <div class="view-header" style="padding-bottom:10px">
+        <div class="today-label">기술지원 참고자료</div>
+        <div style="font-size:13px;color:var(--text3);margin-bottom:10px">구분 선택 → 기인물 선택 → 항목 체크 → 결과 확인</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px" id="tech-category-tabs"></div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap" id="tech-item-tabs"></div>
+      </div>
+      <div id="tech-checklist" style="padding:0 16px 8px"></div>
+      <div id="tech-action-bar" style="display:none;position:sticky;bottom:calc(var(--nav)+8px);padding:10px 16px;background:var(--bg);border-top:1px solid var(--border)">
+        <div style="display:flex;gap:8px">
+          <button onclick="showTechResult()" style="flex:2;height:48px;background:var(--primary);color:#000;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif">✅ 선택완료 — 결과 보기</button>
+          <button onclick="clearTechSelection()" style="flex:1;height:48px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:10px;font-size:14px;cursor:pointer;font-family:'Noto Sans KR',sans-serif">전체해제</button>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ⑥ 유의사항 -->
+    <div class="view" id="view-notice">
+      <div class="view-header">
+        <div class="today-label">유의사항</div>
+        <div style="font-size:13px;color:var(--text3);margin-top:2px">공사 유형별 지원 기준 및 주의사항</div>
+      </div>
+      <div style="padding:0 16px 100px" id="notice-body"></div>
+    </div>
+
+    <!-- ⑦ 현장 지도 -->
+    <div class="view" id="view-map">
+      <div class="view-header" style="padding-bottom:10px">
+        <div class="today-label">현장 지도</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px" id="map-layer-btns"></div>
+      </div>
+      <div id="site-map" style="width:100%;height:calc(100vh - 180px);min-height:400px"></div>
+    </div>
+
+    <div class="view" id="view-settings">
+      <div class="settings-body">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:30px;font-weight:800;margin-bottom:16px">데이터 <span style="color:var(--primary)">현황</span></div>
+        <div class="stats-grid" id="stats-grid"></div>
+        <div class="sg-title" style="margin-bottom:8px">연동 설정</div>
+        <div class="si" onclick="editApiUrl()">
+          <div class="si-icon blue">🔗</div>
+          <div class="si-text"><strong>앱스스크립트 URL</strong><div class="url-display" id="url-display">미설정</div></div>
+          <svg style="color:var(--text3);flex-shrink:0;width:18px;height:18px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        </div>
+        <div class="si" onclick="editAppTitle()">
+          <div class="si-icon blue">🏷️</div>
+          <div class="si-text"><strong>앱 제목</strong><small id="title-display">한국건설안전공사 현장관리 - 당진시</small></div>
+          <svg style="color:var(--text3);flex-shrink:0;width:18px;height:18px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        </div>
+        <div class="si" onclick="editOfficerInfo()">
+          <div class="si-icon green">👤</div>
+          <div class="si-text"><strong>담당자 정보</strong><small id="officer-display">이름 · 연락처</small></div>
+          <svg style="color:var(--text3);flex-shrink:0;width:18px;height:18px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        </div>
+        <div class="si" onclick="editKakaoKey()">
+          <div class="si-icon amber">🗺️</div>
+          <div class="si-text"><strong>카카오 JavaScript 키</strong><small id="kakao-key-display">미설정</small></div>
+          <svg style="color:var(--text3);flex-shrink:0;width:18px;height:18px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        </div>
+        <div class="si" onclick="refreshData()">
+          <div class="si-icon amber">🔄</div>
+          <div class="si-text"><strong>데이터 새로고침</strong><small id="last-updated">마지막 업데이트: -</small></div>
+          <svg style="color:var(--text3);flex-shrink:0;width:18px;height:18px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        </div>
+        <div class="si" onclick="resetCompleted()">
+          <div class="si-icon green">↩️</div>
+          <div class="si-text"><strong>상태 전체 초기화</strong><small>모든 현장 상태를 초기화합니다</small></div>
+          <svg style="color:var(--text3);flex-shrink:0;width:18px;height:18px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        </div>
+        <div class="si" onclick="changePassword()">
+          <div class="si-icon" style="background:rgba(239,68,68,.15)">🔒</div>
+          <div class="si-text"><strong>비밀번호 변경</strong><small>앱 접근 비밀번호를 변경합니다</small></div>
+          <svg style="color:var(--text3);flex-shrink:0;width:18px;height:18px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        </div>
+        <div class="si" onclick="logout()">
+          <div class="si-icon" style="background:rgba(239,68,68,.15)">🚪</div>
+          <div class="si-text"><strong>로그아웃</strong><small>비밀번호 화면으로 돌아갑니다</small></div>
+          <svg style="color:var(--text3);flex-shrink:0;width:18px;height:18px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        </div>
+        <div class="si" onclick="confirmClearCache()">
+          <div class="si-icon red">🗑️</div>
+          <div class="si-text"><strong>캐시 삭제 후 재로딩</strong><small>저장된 캐시를 지우고 새로 불러옵니다</small></div>
+          <svg style="color:var(--text3);flex-shrink:0;width:18px;height:18px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        </div>
+
+        <!-- ④ 방문 기준 설정 -->
+        <div style="margin-top:16px;margin-bottom:8px" class="sg-title">방문 집중기간 기준 설정</div>
+        <div class="criteria-editor">
+          <div style="font-size:13px;color:var(--text3);margin-bottom:12px">※ 주 단위로 입력 (예: 2 = 2주)</div>
+          <div class="criteria-row">
+            <span class="criteria-label"><span style="background:var(--c-hj);color:#fff;border-radius:4px;padding:1px 7px;font-size:12px">현장발굴</span></span>
+            <span style="font-size:13px;color:var(--text2);flex:1">발굴일 후</span>
+            <input class="criteria-val" type="number" id="cr-hj" min="1" max="12" value="1" onchange="saveCriteria()"> 주간
+          </div>
+          <div class="criteria-row">
+            <span class="criteria-label"><span style="background:var(--c-ck);color:#000;border-radius:4px;padding:1px 7px;font-size:12px">착공신고</span></span>
+            <span style="font-size:13px;color:var(--text2);flex:1">착공예정일 +</span>
+            <input class="criteria-val" type="number" id="cr-ck-start" min="1" max="20" value="6" onchange="saveCriteria()"> ~
+            <input class="criteria-val" type="number" id="cr-ck-end" min="1" max="20" value="8" onchange="saveCriteria()"> 주
+          </div>
+          <div class="criteria-row">
+            <span class="criteria-label"><span style="background:var(--c-sj);color:#fff;border-radius:4px;padding:1px 7px;font-size:12px">산재(일반)</span></span>
+            <span style="font-size:13px;color:var(--text2);flex:1">종료일 전</span>
+            <input class="criteria-val" type="number" id="cr-sj-before" min="1" max="12" value="3" onchange="saveCriteria()"> ~
+            <input class="criteria-val" type="number" id="cr-sj-after" min="0" max="8" value="1" onchange="saveCriteria()"> 주
+          </div>
+          <div class="criteria-row">
+            <span class="criteria-label"><span style="background:var(--c-sj);color:#fff;border-radius:4px;padding:1px 7px;font-size:12px">산재(인테리어)</span></span>
+            <span style="font-size:13px;color:var(--text2);flex:1">중간일 ±</span>
+            <input class="criteria-val" type="number" id="cr-sj-int" min="1" max="8" value="1" onchange="saveCriteria()"> 주
+          </div>
+          <button onclick="saveCriteria()" style="width:100%;height:42px;margin-top:12px;border-radius:10px;border:none;background:var(--primary);color:#000;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif">💾 방문기준 저장 및 동기화</button>
+        </div>
+        <div style="margin-top:14px;text-align:center;font-size:13px;color:var(--text3)">당진시 현장관리 v4.0 · Google Sheets 연동</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 선택 바 -->
+  <div class="sel-bar" id="sel-bar">
+    <div class="sel-info">선택됨 <strong id="sel-count">0</strong>개 현장</div>
+    <button class="sel-clear" onclick="clearSelection()">해제</button>
+    <button class="sel-route" onclick="openRouteModal()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 12h18M3 6l9-3 9 3M3 18l9 3 9-3"/></svg>
+      경로 보기
+    </button>
+  </div>
+
+  <div class="bottom-nav">
+    <button class="nav-item active" id="nav-rec" onclick="showView('rec')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg>
+      <span>홈</span>
+    </button>
+    <button class="nav-item" id="nav-list" onclick="showView('list')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      <span>전체목록</span>
+    </button>
+    <button class="nav-item" id="nav-nearby" onclick="showView('nearby')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="8"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/></svg>
+      <span>주변검색</span>
+    </button>
+    <button class="nav-item" id="nav-tech" onclick="showView('tech')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+      <span>기술지원</span>
+    </button>
+    <button class="nav-item" id="nav-notice" onclick="showView('notice')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+      <span>유의사항</span>
+    </button>
+    <button class="nav-item" id="nav-map" onclick="showView('map')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6-10l6 3m0 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 9m0-2v13"/></svg>
+      <span>현장지도</span>
+    </button>
+    <button class="nav-item" id="nav-settings" onclick="showView('settings')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      <span>설정</span>
+    </button>
+  </div>
+</div>
+
+<!-- 경로 모달 -->
+<div class="route-modal hidden" id="route-modal">
+  <div class="route-sheet">
+    <div class="route-handle"></div>
+    <div class="route-title">📍 방문 경로 계획</div>
+    <div class="route-sub">총 <span id="route-count">0</span>개 현장 · 4개소씩 구간 분할</div>
+    <div id="gps-loading" style="padding:10px 0;font-size:13px;color:var(--text2);display:flex;align-items:center;gap:8px">
+      <div class="spinner" style="width:18px;height:18px;border-width:2px;margin:0"></div>
+      <span id="route-origin-text">현위치 확인 중...</span>
+    </div>
+    <div id="route-list"></div>
+    <button onclick="closeRouteModal()" style="width:100%;height:46px;margin-top:8px;background:transparent;border:1px solid var(--border);color:var(--text2);border-radius:10px;font-size:15px;cursor:pointer;font-family:'Noto Sans KR',sans-serif">닫기</button>
+  </div>
+</div>
+
+<!-- 기술지원 결과 모달 -->
+<div class="detail-modal" id="tech-result-modal" style="z-index:8100">
+  <div class="dm-header">
+    <button class="dm-back" onclick="document.getElementById('tech-result-modal').classList.remove('open')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    </button>
+    <div class="dm-title">기술지원 선택 결과</div>
+    <button onclick="copyTechResult()" style="height:36px;padding:0 14px;background:var(--primary);color:#000;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif">📋 복사</button>
+  </div>
+  <div class="dm-body" id="tech-result-content" style="padding-bottom:40px"></div>
+</div>
+
+<!-- 상세 모달 -->
+<div class="detail-modal" id="detail-modal">
+  <div class="dm-header">
+    <button class="dm-back" onclick="closeDetail()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg></button>
+    <div class="dm-title" id="dm-title">상세 정보</div>
+    <button class="dm-done" id="dm-done-btn" onclick="event.stopPropagation();openStatusPickerDetail()">상태 변경</button>
+  </div>
+  <div class="dm-body" id="dm-body"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ===================== CONFIG =====================
+const REGIONS=['전체','고대면','석문면','송악읍','송산면','대호지면','면천면','정미면','동지역'];
+const WORK_TYPES=['긴급공사','인테리어신축','리모델링철거','외벽방수','전기소방','일반공사'];
+
+// ===================== STATE =====================
+let allSites=[];
+let siteStatus=new Map();
+let siteSupStatus=new Map();
+let siteVisitDate=new Map();
+let siteCompletedAt=new Map(); // 공사완료/N회지원 완료 시각
+let siteMemos=new Map();
+let priorityIds=new Set(); // 중점 관리 현장
+let selectedIds=new Set();
+let currentRegion='전체';
+let listTypes=new Set(['hyunjang','chakgong','sanJae']);
+let listRegion=new Set(['전체']); // 전체목록 지역 복수 선택
+// ① 상태 필터
+let listStatuses=new Set(['미확인','확인불가','공사전','공사중','추가지원']);
+// ② 공사종류 필터
+let listWorks=new Set(['긴급공사','인테리어신축','리모델링철거','외벽방수','전기소방','일반공사']);
+let currentDetailId=null;
+let db=null;
+
+// ④ 방문기준 (localStorage에서 로드)
+let CRITERIA={hjWeeks:1,ckStart:6,ckEnd:8,sjBefore:3,sjAfter:1,sjInt:1};
+
+function loadCriteria(){
+  const saved=localStorage.getItem('visit_criteria');
+  if(saved) try{ Object.assign(CRITERIA,JSON.parse(saved)); }catch(e){}
+  document.getElementById('cr-hj').value=CRITERIA.hjWeeks;
+  document.getElementById('cr-ck-start').value=CRITERIA.ckStart;
+  document.getElementById('cr-ck-end').value=CRITERIA.ckEnd;
+  document.getElementById('cr-sj-before').value=CRITERIA.sjBefore;
+  document.getElementById('cr-sj-after').value=CRITERIA.sjAfter;
+  document.getElementById('cr-sj-int').value=CRITERIA.sjInt;
+}
+function saveCriteria(){
+  CRITERIA={
+    hjWeeks:parseInt(document.getElementById('cr-hj').value)||1,
+    ckStart:parseInt(document.getElementById('cr-ck-start').value)||6,
+    ckEnd:parseInt(document.getElementById('cr-ck-end').value)||8,
+    sjBefore:parseInt(document.getElementById('cr-sj-before').value)||3,
+    sjAfter:parseInt(document.getElementById('cr-sj-after').value)||1,
+    sjInt:parseInt(document.getElementById('cr-sj-int').value)||1,
+  };
+  localStorage.setItem('visit_criteria',JSON.stringify(CRITERIA));
+  // 서버에도 저장 (동기화)
+  const url=localStorage.getItem('apps_script_url');
+  if(url) authPost(url,{action:'saveCriteria',criteria:CRITERIA}).catch(()=>{});
+  allSites.forEach(s=>{ const p=calcPeriod(s); s.visitStart=p?.start; s.visitEnd=p?.end; });
+  renderAll();
+  showToast('✅ 방문기준 저장됨 (동기화 중...)');
+}
+async function loadCriteriaFromServer(){
+  const url=localStorage.getItem('apps_script_url');
+  if(!url)return;
+  try{
+    const res=await authGet(url,'?action=getCriteria');
+    const data=await res.json();
+    if(data.criteria){
+      Object.assign(CRITERIA,data.criteria);
+      localStorage.setItem('visit_criteria',JSON.stringify(CRITERIA));
+      loadCriteria(); // UI 업데이트
+      allSites.forEach(s=>{ const p=calcPeriod(s); s.visitStart=p?.start; s.visitEnd=p?.end; });
+      renderAll();
+    }
+  }catch(e){ console.warn('기준 서버 로드 실패:', e); }
+}
+
+// ===================== INDEXEDDB =====================
+async function openDB(){
+  return new Promise((res,rej)=>{
+    const req=indexedDB.open('dangjin_v4',2); // v2: priority 스토어 추가
+    req.onupgradeneeded=e=>{
+      const d=e.target.result;
+      if(!d.objectStoreNames.contains('status'))d.createObjectStore('status',{keyPath:'id'});
+      if(!d.objectStoreNames.contains('cache'))d.createObjectStore('cache',{keyPath:'key'});
+      if(!d.objectStoreNames.contains('memos'))d.createObjectStore('memos',{keyPath:'id'});
+      if(!d.objectStoreNames.contains('priority'))d.createObjectStore('priority',{keyPath:'id'});
+    };
+    req.onsuccess=e=>res(e.target.result);
+    req.onerror=e=>rej(e.target.error);
+  });
+}
+function tx(store,mode='readonly'){return db.transaction(store,mode).objectStore(store);}
+function dbPut(store,obj){return new Promise(r=>{tx(store,'readwrite').put(obj).onsuccess=r;});}
+function dbDel(store,key){return new Promise(r=>{tx(store,'readwrite').delete(key).onsuccess=r;});}
+function dbClear(store){return new Promise(r=>{tx(store,'readwrite').clear().onsuccess=r;});}
+function dbGet(store,key){return new Promise(r=>{const req=tx(store).get(key);req.onsuccess=()=>r(req.result);req.onerror=()=>r(null);});}
+function dbAll(store){return new Promise(r=>{const req=tx(store).getAll();req.onsuccess=()=>r(req.result||[]);req.onerror=()=>r([]);});}
+
+// ===================== DATE UTILS =====================
+function pd(s){if(!s||s==='')return null;const d=new Date(s);return isNaN(d)?null:d;}
+function addDays(d,n){const r=new Date(d);r.setDate(r.getDate()+n);return r;}
+function today(){const d=new Date();d.setHours(0,0,0,0);return d;}
+function fd(d){if(!d)return '-';const dt=typeof d==='string'?pd(d):d;if(!dt)return '-';return`${dt.getMonth()+1}/${dt.getDate()}`;}
+function fdFull(d){if(!d)return '-';const dt=typeof d==='string'?pd(d):d;if(!dt)return '-';return`${dt.getFullYear()}.${String(dt.getMonth()+1).padStart(2,'0')}.${String(dt.getDate()).padStart(2,'0')}`;}
+function fdISO(d){if(!d)return '';const dt=typeof d==='string'?pd(d):d;if(!dt)return '';return`${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;}
+function inPeriod(s,e){const t=today(),sd=typeof s==='string'?pd(s):s,ed=typeof e==='string'?pd(e):e;if(!sd||!ed)return false;return t>=sd&&t<=ed;}
+function extractDateFromStatus(txt){if(!txt)return null;const m=txt.match(/(\d{1,2})\/(\d{1,2})/);if(!m)return null;return new Date(new Date().getFullYear(),parseInt(m[1])-1,parseInt(m[2]));}
+
+// ===================== CLASSIFICATION =====================
+function extractRegion(addr){
+  const list=['석문면','송악읍','송산면','고대면','대호지면','면천면','정미면'];
+  const excluded=['순성면','신평면','우강면','합덕읍'];
+  if(!addr)return '동지역';
+  for(const r of excluded)if(addr.includes(r))return '기타지역';
+  for(const r of list)if(addr.includes(r))return r;
+  return '동지역';
+}
+function extractWorkType(name){
+  if(!name)return '일반공사';
+  if(['긴급','응급'].some(k=>name.includes(k)))return '긴급공사';
+  if(['철거','리모델링'].some(k=>name.includes(k)))return '리모델링철거';
+  if(['외벽','이중창','창호','페인트','도장','옥상','방수'].some(k=>name.includes(k)))return '외벽방수';
+  if(['전기','소방','가로등','보안등'].some(k=>name.includes(k)))return '전기소방';
+  if(['신축','인테리어','카페','단독주택','증축','사무실','창고','공장'].some(k=>name.includes(k)))return '인테리어신축';
+  return '일반공사'; // 배수로, 수해재해, 일반공사 모두 일반공사로
+}
+function isAreaExceeded(용도,연면적){
+  const a=parseFloat(연면적)||0;
+  if((용도||'').includes('단독주택')&&a>170)return true;
+  if((용도||'').includes('근린생활')&&a>210)return true;
+  if((용도||'').includes('창고')&&a>300)return true;
+  if((용도||'').includes('공장')&&a>260)return true;
+  return false;
+}
+
+// ===================== VISIT PERIOD (④ 기준 반영) =====================
+function calcPeriod(site){
+  if(site.type==='sanJae'){
+    const wt=site.workType,end=pd(site.endDate),start=pd(site.startDate);
+    if(!end)return null;
+    if(wt==='인테리어신축'||wt==='리모델링'){
+      if(!start)return{start:addDays(end,-CRITERIA.sjBefore*7),end:addDays(end,-CRITERIA.sjAfter*7)};
+      const mid=new Date((start.getTime()+end.getTime())/2);
+      return{start:addDays(mid,-CRITERIA.sjInt*7),end:addDays(mid,CRITERIA.sjInt*7)};
+    }
+    return{start:addDays(end,-CRITERIA.sjBefore*7),end:addDays(end,-CRITERIA.sjAfter*7)};
+  }
+  if(site.type==='chakgong'){
+    const exp=pd(site.착공예정일);if(!exp)return null;
+    return{start:addDays(exp,CRITERIA.ckStart*7),end:addDays(exp,CRITERIA.ckEnd*7)};
+  }
+  if(site.type==='hyunjang'){
+    const disc=pd(site.discoveredDate);if(!disc)return null;
+    return{start:disc,end:addDays(disc,CRITERIA.hjWeeks*7)};
+  }
+  return null;
+}
+
+// ===================== NORMALIZE =====================
+function normSanJae(raw){
+  return(raw||[]).map((r,i)=>{
+    const wt=extractWorkType(r.현장명);
+    const s={id:r._id||`sj_${i}`,type:'sanJae',priority:0,
+      name:r.현장명||'(현장명없음)',address:r.현장주소||'',
+      region:extractRegion(r.현장주소),workType:wt,
+      startDate:r.공사시작일,endDate:r.공사종료일,
+      lat:r.lat||null,lng:r.lng||null,
+      사업장명:r.사업장명,사업주:r.사업주,관리번호:r.관리번호,개시번호:r.개시번호,
+      사업장전화:r.사업장전화||'',현장전화:r.현장전화||'',공사금액:r.공사금액||0};
+    const p=calcPeriod(s); s.visitStart=p?.start; s.visitEnd=p?.end; return s;
+  }).filter(r=>r.address||r.name); // 기타지역 제외 안 함 — 전체목록에 모두 표시
+}
+function normChakgong(raw){
+  return(raw||[]).map((r,i)=>{
+    const addr=r.대지위치||'';
+    const short=addr.replace(/충청남도\s*당진시\s*/,'').trim();
+    const areaHigh=isAreaExceeded(r.용도,r.연면적);
+    const s={id:r._id||`ck_${i}`,type:'chakgong',priority:areaHigh?-1:0,
+      name:`[${r.용도||'건물'}] ${short.split(' ').slice(0,3).join(' ')}`,
+      address:addr,region:extractRegion(addr),workType:'인테리어신축', // 착공신고는 항상 인테리어신축
+      착공예정일:r.착공예정일,착공신고일:r.착공신고일,
+      건축면적:r.건축면적,연면적:r.연면적,용도:r.용도,
+      lat:r.lat||null,lng:r.lng||null,areaHigh,현상황:r.현상황,비고:r.비고};
+    const p=calcPeriod(s); s.visitStart=p?.start; s.visitEnd=p?.end; return s;
+  }).filter(r=>r.address); // 기타지역 제외 안 함
+}
+function normHyunjang(raw){
+  return(raw||[]).map((r,i)=>{
+    const disc=extractDateFromStatus(r.현상황)||today(); // 날짜 없으면 오늘
+    const statusClean=(r.현상황||'').replace(/\d{1,2}\/\d{1,2}\s*/,'').trim();
+    const s={id:r._id||`hj_${i}`,type:'hyunjang',priority:0,
+      name:statusClean||r.대지위치||'현장발굴',
+      address:r.대지위치||'',region:extractRegion(r.대지위치),
+      workType:extractWorkType(statusClean),
+      discoveredDate:disc instanceof Date?disc.toISOString().split('T')[0]:disc,
+      lat:r.lat||null,lng:r.lng||null,현상황:r.현상황,비고:r.비고};
+    const p=calcPeriod(s); s.visitStart=p?.start; s.visitEnd=p?.end; return s;
+  }).filter(r=>r.address);
+}
+
+// ===================== FETCH =====================
+async function loadData(force=false){
+  setHeaderSub('데이터 로딩 중...');
+  document.getElementById('rec-cards').innerHTML='<div class="loading"><div class="spinner"></div><div>데이터 불러오는 중...</div></div>';
+  const url=localStorage.getItem('apps_script_url');
+  if(!url){setHeaderSub('URL 미설정 — 설정에서 입력해주세요');renderAll();return;}
+  try{
+    let siteRaw=null;
+    if(!force){
+      // siteData 캐시 확인
+      const c=await dbGet('cache','siteData');
+      if(c&&c.data&&c.data.sanJae)siteRaw=c.data;
+    }
+    if(!siteRaw){
+      // 캐시 없음: 서버에서 전체 로드
+      setHeaderSub('서버에서 데이터 불러오는 중...');
+      const res=await authGet(url);
+      if(!res.ok)throw new Error(`서버 응답 오류: ${res.status}`);
+      const full=await res.json();
+      if(full.error)throw new Error(full.error);
+      if(!full.sanJae&&!full.chakgong&&!full.hyunjang)throw new Error('데이터가 비어있습니다. 앱스스크립트를 확인해주세요.');
+      siteRaw={sanJae:full.sanJae||[],chakgong:full.chakgong||[],hyunjang:full.hyunjang||[],timestamp:full.timestamp};
+      await dbPut('cache',{key:'siteData',data:siteRaw,ts:Date.now()});
+      applyStatuses(full.statuses);
+      applyMemos(full.memos);
+      applyPriorities(full.priorities);
+    } else {
+      // 캐시 있음: statuses/memos/priorities만 백그라운드로 최신화
+      setHeaderSub('캐시 데이터 사용 중...');
+      fetchFreshStatusAndMemos(url).catch(()=>{});
+    }
+    allSites=[...normHyunjang(siteRaw.hyunjang||[]),...normChakgong(siteRaw.chakgong||[]),...normSanJae(siteRaw.sanJae||[])];
+    const sj=siteRaw.sanJae?.length||0, ck=siteRaw.chakgong?.length||0, hj=siteRaw.hyunjang?.length||0;
+    const ts=siteRaw.timestamp?new Date(siteRaw.timestamp).toLocaleString('ko-KR'):'-';
+    document.getElementById('last-updated').textContent='마지막 업데이트: '+ts;
+    setHeaderSub(`총 ${allSites.length}개 (산재${sj}/착공${ck}/발굴${hj})`);
+    // 공사종료일 지난 산재가입 현장 자동 공사완료 전환
+    autoCompleteExpiredSites();
+  }catch(e){
+    setHeaderSub('로딩 실패: '+e.message);
+    showToast('❌ '+e.message);
+    console.error('loadData 오류:',e);
+  }
+  renderAll();
+  // 방문기준 서버 동기화 — 백그라운드 (로딩 블로킹 안 함)
+  loadCriteriaFromServer().catch(()=>{});
+}
+
+// 공사종료일 지난 산재가입 현장 자동 공사완료 전환
+async function autoCompleteExpiredSites(){
+  const today=new Date();today.setHours(0,0,0,0);
+  const toSave=[];
+  allSites.filter(s=>s.type==='sanJae'&&s.endDate).forEach(s=>{
+    const end=pd(s.endDate);
+    if(!end)return;
+    const endDay=new Date(end);endDay.setHours(0,0,0,0);
+    if(endDay>=today)return; // 종료일 안 지남
+    const curSite=getSiteStatus(s.id);
+    const curSup=getSupStatus(s.id);
+    // 이미 완료처리된 경우 스킵
+    if(curSite==='공사완료'||curSite==='지원완료')return;
+    // 지원상태가 있는 경우 (방문한 현장) 스킵
+    if(curSup)return;
+    // 자동 공사완료 전환
+    siteStatus.set(s.id,'공사완료');
+    dbPut('status',{id:s.id,status:'공사완료',updatedAt:new Date().toISOString()});
+    toSave.push(s.id);
+  });
+  if(!toSave.length)return;
+  console.log(`[자동완료] 공사종료 ${toSave.length}개 현장 → 공사완료 전환`);
+  // 서버에 일괄 저장 (백그라운드)
+  const url=localStorage.getItem('apps_script_url');
+  if(url){
+    toSave.forEach(id=>{
+      authPost(url,{id,status:'공사완료',supStatus:'',visitDate:''}).catch(()=>{});
+    });
+  }
+  showToast(`🔄 공사종료 ${toSave.length}개 현장 자동 완료 처리됨`);
+}
+
+// statuses 적용
+function applyStatuses(statuses){
+  if(!statuses)return;
+  Object.entries(statuses).forEach(([id,val])=>{
+    if(typeof val==='object'&&val!==null){
+      // 서버 데이터가 항상 우선 — 유효한 값만 적용
+      const s=val.status;
+      if(s&&VALID_SITE_STATUSES.has(s)) siteStatus.set(id,s);
+      else if(s) siteStatus.set(id,'미확인'); // 알 수 없는 값은 미확인
+      const sup=val.supStatus;
+      if(sup&&VALID_SUP_STATUSES.has(sup)) siteSupStatus.set(id,sup);
+      else siteSupStatus.delete(id);
+      if(val.visitDate) siteVisitDate.set(id,val.visitDate);
+      else siteVisitDate.delete(id);
+      if(val.completedAt) siteCompletedAt.set(id,val.completedAt);
+      else siteCompletedAt.delete(id);
+    } else {
+      const s=String(val);
+      if(s==='지원완료'){
+        siteStatus.set(id,'공사중');
+        siteSupStatus.set(id,'1회지원');
+      } else if(VALID_SITE_STATUSES.has(s)){
+        siteStatus.set(id,s);
+      }
+      // 날짜 문자열 등 알 수 없는 값은 무시
+    }
+    dbPut('status',{id,status:getSiteStatus(id),supStatus:getSupStatus(id),visitDate:getVisitDate(id),updatedAt:new Date().toISOString()});
+  });
+}
+function applyPriorities(priorities){
+  if(!priorities)return;
+  Object.entries(priorities).forEach(([id,on])=>{
+    if(on)priorityIds.add(id);else priorityIds.delete(id);
+    if(on)dbPut('priority',{id,on:true});else dbDel('priority',id);
+  });
+}
+// memos 적용 — 서버 데이터 그대로 적용 (병합은 saveMemoToSheetWithMerge에서 처리)
+function applyMemos(memos){
+  if(!memos)return;
+  Object.entries(memos).forEach(([id,memoArr])=>{
+    const arr=Array.isArray(memoArr)?memoArr:[];
+    if(arr.length>0){
+      siteMemos.set(id,arr);
+      dbPut('memos',{id,memos:arr});
+    }
+  });
+}
+// statuses/memos만 서버에서 가져오기 — await 필수
+async function fetchFreshStatusAndMemos(url){
+  try{
+    // ?action=statusAndMemos : 지오코딩 없는 경량 엔드포인트 → 빠름
+    const res=await authGet(url,'?action=statusAndMemos');
+    const data=await res.json();
+    if(data.error)return;
+    applyStatuses(data.statuses);
+    applyMemos(data.memos);
+    applyPriorities(data.priorities);
+  }catch(e){
+    console.warn('statuses/memos 서버 fetch 실패, 로컬 데이터 사용:',e);
+  }
+}
+
+async function refreshData(){
+  const icon=document.getElementById('refresh-icon');
+  icon.style.animation='spin .8s linear infinite';
+  await dbClear('cache');
+  await loadData(true);
+  icon.style.animation='';
+  showToast('✅ 데이터 갱신 완료');
+}
+
+// ── 지오코딩: 좌표 없는 현장을 백그라운드에서 처리 ──
+async function geocodeMissing(){
+  const missing=allSites.filter(s=>!s.lat&&s.address);
+  if(!missing.length)return;
+  const url=localStorage.getItem('apps_script_url');
+  const coordsToSave={};
+  let updated=0;
+
+  for(const s of missing){
+    try{
+      const q=encodeURIComponent(s.address.includes('당진')?s.address:'충청남도 당진시 '+s.address);
+      const res=await fetch(`https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1`,
+        {headers:{'Accept-Language':'ko','User-Agent':'DangjinFieldApp/1.0'}});
+      const data=await res.json();
+      if(data&&data[0]){
+        const lat=parseFloat(data[0].lat), lng=parseFloat(data[0].lon);
+        s.lat=lat; s.lng=lng;
+        coordsToSave[s.address]={lat,lng};
+        updated++;
+      }
+      await new Promise(r=>setTimeout(r,300)); // Nominatim 0.3초 딜레이
+    }catch(e){ /* 실패 시 무시 */ }
+  }
+
+  if(updated>0){
+    // 사이트 데이터 캐시 갱신
+    const c=await dbGet('cache','siteData');
+    if(c&&c.data){
+      // lat/lng 업데이트 반영
+      ['sanJae','chakgong','hyunjang'].forEach(key=>{
+        (c.data[key]||[]).forEach(r=>{
+          const addr=r.현장주소||r.대지위치||'';
+          if(coordsToSave[addr]){r.lat=coordsToSave[addr].lat;r.lng=coordsToSave[addr].lng;}
+        });
+      });
+      await dbPut('cache',{key:'siteData',data:c.data,ts:Date.now()});
+    }
+    // 서버 캐시에도 저장 (다음 fetch 때 반영)
+    if(url){
+      authPost(url,{action:'saveCoords',coords:coordsToSave}).catch(()=>{});
+    }
+    showToast(`📍 좌표 ${updated}개 업데이트됨`);
+  }
+}
+
+// ===================== TYPE LABEL / BADGE =====================
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function typeLabelHTML(type){
+  const m={hyunjang:['tl-hj','현장발굴'],chakgong:['tl-ck','착공신고'],sanJae:['tl-sj','산재가입']};
+  const[cls,lbl]=m[type]||['',''];
+  return`<div class="type-label ${cls}">${lbl}</div>`;
+}
+function periodBadge(s){
+  if(!s.visitStart||!s.visitEnd)return'<span class="badge b-gray">기간미설정</span>';
+  const t=today(),sd=typeof s.visitStart==='string'?pd(s.visitStart):s.visitStart,ed=typeof s.visitEnd==='string'?pd(s.visitEnd):s.visitEnd;
+  if(!sd||!ed)return'';
+  if(t>=sd&&t<=ed){
+    const rem=Math.round((ed-t)/86400000);
+    return`<span class="badge b-green">집중방문기간 종료 ${rem}일전</span>`;
+  }
+  if(t<sd){
+    const unt=Math.round((sd-t)/86400000);
+    return`<span class="badge b-gray">집중방문기간 ${unt}일후 시작</span>`;
+  }
+  // 기간 지남
+  if(s.type==='sanJae'){
+    // 산재가입: 공사종료일 기준
+    const end=typeof s.endDate==='string'?pd(s.endDate):s.endDate;
+    if(end){
+      const daysLeft=Math.round((end-t)/86400000);
+      if(daysLeft>0)return`<span class="badge b-amber">공사종료 ${daysLeft}일전</span>`;
+      if(daysLeft===0)return`<span class="badge b-red">공사종료 D-day</span>`;
+      return`<span class="badge b-gray" style="opacity:.5">공사종료됨</span>`;
+    }
+  }
+  return'<span class="badge b-gray" style="opacity:.5">집중방문기간 종료</span>';
+}
+function stripeClass(s){
+  if(s.type==='chakgong'&&s.areaHigh)return'stripe-high';
+  if(s.type==='hyunjang')return'stripe-hj';
+  if(s.type==='chakgong')return'stripe-ck';
+  if(s.type==='sanJae')return'stripe-sj';
+  return'stripe-normal';
+}
+
+// ③ 인라인 상태 드롭다운
+// ===================== 상태 시스템 =====================
+// 현장상태 (공사 진행) - 5개
+const SITE_STATUS_LIST=['미확인','확인불가','공사전','공사중','공사완료','지원완료'];
+const SITE_STATUS_CLASS={'미확인':'st-unknown','확인불가':'st-unconf','공사전':'st-before','공사중':'st-working','공사완료':'st-done','지원완료':'st-supported'};
+const SITE_STATUS_LABEL={'미확인':'❓','확인불가':'🚫','공사전':'🔲','공사중':'🔨','공사완료':'✅','지원완료':'🎯'};
+const SITE_STATUS_LABEL_FULL={'미확인':'❓ 미확인','확인불가':'🚫 확인불가','공사전':'🔲 공사전','공사중':'🔨 공사중','공사완료':'✅ 공사완료','지원완료':'🎯 지원완료'};
+const SITE_STATUS_NAME={'미확인':'미확인','확인불가':'확인불가','공사전':'공사전','공사중':'공사중','공사완료':'공사완료','지원완료':'지원완료'};
+
+// 지원상태 (방문 이력) - 5개
+const SUP_STATUS_LIST=['1회지원예정','1회지원','2회예정','2회지원','3회예정','3회지원'];
+const SUP_STATUS_CLASS={'1회지원예정':'st-sup0p','1회지원':'st-sup1','2회예정':'st-sup2p','2회지원':'st-sup2','3회예정':'st-sup3p','3회지원':'st-sup3'};
+const SUP_STATUS_LABEL={'1회지원예정':'1회예정','1회지원':'1회지원','2회예정':'2회예정','2회지원':'2회지원','3회예정':'3회예정','3회지원':'3회지원'};
+
+// 하위 호환
+const STATUS_LIST=SITE_STATUS_LIST;
+const STATUS_CLASS=SITE_STATUS_CLASS;
+const STATUS_LABEL_FULL=SITE_STATUS_LABEL_FULL;
+const STATUS_LABEL=SITE_STATUS_NAME;
+
+const VALID_SITE_STATUSES=new Set(['미확인','확인불가','공사전','공사중','공사완료','지원완료']);
+const VALID_SUP_STATUSES=new Set(['1회지원예정','1회지원','2회예정','2회지원','3회예정','3회지원']);
+
+function sanitizeStatus(val, validSet, fallback){
+  if(!val)return fallback;
+  if(validSet.has(val))return val;
+  // Date 문자열인 경우 → 포맷해서 반환 (배지에서 날짜로 표시)
+  return fallback;
+}
+
+function getSiteStatus(id){
+  const raw=siteStatus.get(id)||'미확인';
+  return VALID_SITE_STATUSES.has(raw)?raw:'미확인';
+}
+function getSupStatus(id){
+  const raw=siteSupStatus.get(id)||'';
+  return VALID_SUP_STATUSES.has(raw)?raw:'';
+}
+function getVisitDate(id){return siteVisitDate.get(id)||'';}
+function getCompletedAt(id){return siteCompletedAt.get(id)||'';}
+// 완료일시 포맷: "2026/03/27 14:05"
+function fmtCompletedAt(val){
+  if(!val)return'';
+  try{
+    const d=new Date(val);
+    if(isNaN(d))return'';
+    const y=d.getFullYear();
+    const mo=String(d.getMonth()+1).padStart(2,'0');
+    const day=String(d.getDate()).padStart(2,'0');
+    const h=String(d.getHours()).padStart(2,'0');
+    const m=String(d.getMinutes()).padStart(2,'0');
+    return`${y}/${mo}/${day} ${h}:${m}`;
+  }catch(e){return'';}
+}
+function getStatus(id){return getSiteStatus(id);}
+
+// 비활성화: 공사완료 OR 지원완료 OR N회지원 (예정은 활성)
+function isCompleted(id){
+  const site=getSiteStatus(id);
+  if(site==='공사완료'||site==='지원완료')return true;
+  // N회지원(예정 아닌 완료)도 완료로 처리
+  if(['1회지원','2회지원','3회지원'].includes(getSupStatus(id)))return true;
+  return false;
+}
+// 방문예정 현장 (1회지원예정 포함)
+function isScheduled(id){
+  return['1회지원예정','2회예정','3회예정'].includes(getSupStatus(id));
+}
+// ===================== 중점 관리 현장 =====================
+function isPriority(id){return priorityIds.has(id);}
+
+function togglePriority(id,event){
+  event.stopPropagation();
+  // 즉시 상태 변경
+  if(priorityIds.has(id))priorityIds.delete(id);
+  else priorityIds.add(id);
+  const on=priorityIds.has(id);
+  // UI 즉시 반영 — 모든 pbtn- 업데이트 (홈+전체목록 동시)
+  document.querySelectorAll(`#pbtn-${id}`).forEach(btn=>{
+    btn.classList.toggle('on',on);
+    btn.textContent=on?'⭐ 중점관리':'☆ 중점관리';
+  });
+  showToast(on?'⭐ 중점관리 지정됨':'☆ 중점관리 해제됨');
+  // 홈 재렌더 (백그라운드)
+  renderRecommend();
+  // 저장은 비동기 (UI 블로킹 없음)
+  if(on) dbPut('priority',{id,on:true}); else dbDel('priority',id);
+  savePriorityToSheet(id, on);
+}
+
+async function savePriorityToSheet(id, on){
+  const url=localStorage.getItem('apps_script_url');if(!url)return;
+  try{ await authPost(url,{action:'savePriority',id,on}); }
+  catch(e){console.warn('중점관리 서버 저장 실패:',e);}
+}
+
+function priorityBtnHTML(id,stopProp=true){
+  const on=isPriority(id);
+  const sp=stopProp?'event.stopPropagation();':'';
+  return`<button class="priority-btn${on?' on':''}" id="pbtn-${id}" onclick="${sp}togglePriority('${id}',event)">${on?'⭐ 중점관리':'☆ 중점관리'}</button>`;
+}
+
+function statusRowHTML(id,stopProp=true){
+  const st=getSiteStatus(id);
+  const sup=getSupStatus(id);
+  const sp=stopProp?'event.stopPropagation();':'';
+  const siteLabel=SITE_STATUS_LABEL[st]||'❓';
+  const siteName=SITE_STATUS_NAME[st]||'미확인';
+  const siteCls=SITE_STATUS_CLASS[st]||'st-unknown';
+  const supLabel=sup?(SUP_STATUS_LABEL[sup]||'지원상태'):'선택';
+  const supCls=sup?(SUP_STATUS_CLASS[sup]||'st-sup1'):'st-none';
+  return`<div class="status-row" id="sr-${id}">
+    <div style="display:flex;gap:6px">
+      <button class="status-pill ${siteCls}${!sup||['1회지원예정','2회예정','3회예정'].includes(sup)?'':' dim'}"
+        onclick="${sp}openStatusPicker('${id}','site')"
+        style="flex:1;height:36px;border-radius:9px;border:none;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;display:flex;align-items:center;justify-content:center;gap:5px">
+        <span>${siteLabel}</span><span>${siteName}</span><span style="font-size:10px;opacity:.7">▾</span>
+      </button>
+      <button class="status-pill ${supCls}"
+        onclick="${sp}openStatusPicker('${id}','sup')"
+        style="flex:1;height:36px;border-radius:9px;border:none;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;display:flex;align-items:center;justify-content:center;gap:5px;${!sup?'background:var(--bg3);color:var(--text3);opacity:.6':''}">
+        <span>🏆</span><span>${supLabel}</span><span style="font-size:10px;opacity:.7">▾</span>
+      </button>
+    </div>
+  </div>`;
+}
+
+// 상태 선택 팝업
+let _statusPickerResolve=null;
+async function openStatusPicker(id,type){
+  const old=document.getElementById('status-picker-overlay');
+  if(old)old.remove();
+  const overlay=document.createElement('div');
+  overlay.id='status-picker-overlay';
+  overlay.style.cssText='position:fixed;inset:0;z-index:99000;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;justify-content:center';
+  const isSite=type==='site';
+  const list=isSite?SITE_STATUS_LIST:SUP_STATUS_LIST;
+  const cls=isSite?SITE_STATUS_CLASS:SUP_STATUS_CLASS;
+  const icons=isSite?{'미확인':'❓','확인불가':'🚫','공사전':'🔲','공사중':'🔨','공사완료':'✅','지원완료':'🎯'}
+    :{'1회지원예정':'📅','1회지원':'✅','2회예정':'📅','2회지원':'✅','3회예정':'📅','3회지원':'✅'};
+  const cur=isSite?getSiteStatus(id):getSupStatus(id);
+  const items=list.map(s=>`
+    <button onclick="pickStatus('${id}','${type}','${s}')"
+      style="width:100%;height:52px;border:none;background:${cur===s?'var(--bg3)':'transparent'};color:var(--text);font-size:16px;font-weight:${cur===s?'700':'500'};cursor:pointer;font-family:'Noto Sans KR',sans-serif;display:flex;align-items:center;gap:12px;padding:0 20px;border-bottom:1px solid var(--border)">
+      <span style="font-size:20px">${icons[s]||'•'}</span>${s}${cur===s?' ✓':''}
+    </button>`).join('');
+  overlay.innerHTML=`
+    <div style="width:100%;max-width:480px;background:var(--bg2);border-radius:20px 20px 0 0;padding-bottom:env(safe-area-inset-bottom,0px)">
+      <div style="padding:16px 20px;font-size:15px;font-weight:700;color:var(--text3);border-bottom:1px solid var(--border)">${isSite?'📍 현장상태 선택':'🏆 지원상태 선택'}</div>
+      ${items}
+      <button onclick="document.getElementById('status-picker-overlay').remove()"
+        style="width:100%;height:52px;border:none;background:transparent;color:var(--text3);font-size:15px;cursor:pointer;font-family:'Noto Sans KR',sans-serif">취소</button>
+    </div>`;
+  overlay.addEventListener('click',e=>{if(e.target===overlay)overlay.remove();});
+  document.body.appendChild(overlay);
+}
+async function pickStatus(id,type,status){
+  document.getElementById('status-picker-overlay')?.remove();
+  if(type==='site') await selectSiteStatus(id,status);
+  else await selectSupStatus(id,status);
+}
+function todayStr(){const d=new Date();return d.toISOString().split('T')[0];}
+function ddayHTML(id){
+  const vd=getVisitDate(id);
+  const sup=getSupStatus(id);
+  if(!sup||!['1회지원예정','2회예정','3회예정'].includes(sup))return'';
+  if(!vd)return`<div style="padding:4px 10px;background:rgba(249,115,22,.15);border-radius:8px;font-size:12px;font-weight:700;color:#f97316;margin-bottom:6px">📅 날짜 미입력</div>`;
+  // 날짜 정규화 — YYYY-MM-DD 형식으로 변환 시도
+  const str=String(vd).trim();
+  const match=str.match(/(\d{4})[^\d](\d{1,2})[^\d](\d{1,2})/);
+  if(!match)return`<div style="padding:4px 10px;background:rgba(249,115,22,.15);border-radius:8px;font-size:12px;font-weight:700;color:#f97316;margin-bottom:6px">📅 저장값: "${str}"</div>`;
+  const y=parseInt(match[1]),m=parseInt(match[2]),d=parseInt(match[3]);
+  const visitDay=new Date(y,m-1,d);
+  const t=todayStr().split('-');
+  const todayDay=new Date(parseInt(t[0]),parseInt(t[1])-1,parseInt(t[2]));
+  const diff=Math.ceil((visitDay-todayDay)/(1000*60*60*24));
+  const labels={'1회지원예정':'1회차','2회예정':'2회차','3회예정':'3회차'};
+  const round=labels[sup]||'';
+  let color='var(--text3)';
+  if(diff<=3)color='#ef4444';
+  else if(diff<=7)color='#f97316';
+  else if(diff<=14)color='#eab308';
+  const label=diff===0?'오늘':diff<0?`D+${Math.abs(diff)}`:`D-${diff}`;
+  const dateStr=`${y}/${String(m).padStart(2,'0')}/${String(d).padStart(2,'0')}`;
+  return`<div style="display:inline-flex;align-items:center;gap:5px;padding:4px 10px;background:rgba(249,115,22,.15);border-radius:8px;font-size:12px;font-weight:700;color:${color};margin-bottom:6px">📅 ${round} 방문예정 ${dateStr} <span style="font-weight:800">(${label})</span></div>`;
+}
+// 하위호환용
+function statusBadgeHTML(id,sp){return statusRowHTML(id);}
+function statusWrapHTML(id,sp){return statusRowHTML(id);}
+function statusSelectRowHTML(id,sp){return'';}
+let openDropdownId=null;
+function toggleDropdown(){}
+function closeAllDropdowns(){
+  const detailDd=document.getElementById('detail-dd');
+  if(detailDd)detailDd.style.display='none';
+}
+document.addEventListener('click',closeAllDropdowns);
+
+async function selectSiteStatus(id,status){
+  closeAllDropdowns();
+  siteStatus.set(id,status);
+  const now=new Date().toISOString();
+  if(status==='공사완료'&&!getCompletedAt(id)){
+    siteCompletedAt.set(id,now);
+  } else if(status!=='공사완료'&&status!=='지원완료'){
+    siteCompletedAt.delete(id);
+  }
+  await dbPut('status',{id,status,completedAt:getCompletedAt(id),updatedAt:now});
+  saveFullStatusToSheet(id);
+  if(isCompleted(id)){selectedIds.delete(id);updateSelBar();}
+  showToast(`📌 ${SITE_STATUS_LABEL[status]} 처리됨`);
+  refreshCardStatus(id);
+  setTimeout(()=>{renderRecommend();renderList();if(nearbyGps)renderNearby();},300);
+}
+
+async function selectSupStatus(id,status){
+  closeAllDropdowns();
+
+  const isScheduledStatus=['1회지원예정','2회예정','3회예정'].includes(status);
+  const alreadySet=getSupStatus(id)===status;
+
+  // 이미 설정된 예정 상태 클릭 → 일정 수정 (캘린더 오픈)
+  if(alreadySet&&isScheduledStatus){
+    const labels={'1회지원예정':'1회차','2회예정':'2회차','3회예정':'3회차'};
+    const dateVal=await showDatePicker(`📅 ${labels[status]} 방문 예정일 수정`,getVisitDate(id),true);
+    if(dateVal===null)return;         // 취소 버튼
+    if(dateVal==='__delete__'){       // 일정 취소 버튼
+      siteSupStatus.delete(id);
+      siteVisitDate.delete(id);
+      await dbPut('status',{id,supStatus:'',visitDate:'',updatedAt:new Date().toISOString()});
+      saveFullStatusToSheet(id);
+      showToast('🗑️ 방문 일정이 취소됐습니다');
+      refreshCardStatus(id);
+      setTimeout(()=>{renderRecommend();renderList();if(nearbyGps)renderNearby();},300);
+      return;
+    }
+    siteVisitDate.set(id,dateVal);
+    await dbPut('status',{id,supStatus:status,visitDate:dateVal,updatedAt:new Date().toISOString()});
+    saveFullStatusToSheet(id);
+    showToast(`📅 방문 일정이 수정됐습니다`);
+    refreshCardStatus(id);
+    setTimeout(()=>{renderRecommend();renderList();if(nearbyGps)renderNearby();},300);
+    return;
+  }
+
+  // 이미 선택된 비예정 상태 다시 누르면 해제
+  if(alreadySet&&!isScheduledStatus){
+    siteSupStatus.delete(id);
+    siteVisitDate.delete(id);
+    await dbPut('status',{id,supStatus:'',visitDate:'',updatedAt:new Date().toISOString()});
+    saveFullStatusToSheet(id);
+    showToast('↩️ 지원상태 해제됨');
+    refreshCardStatus(id);
+    setTimeout(()=>{renderRecommend();renderList();if(nearbyGps)renderNearby();},300);
+    return;
+  }
+
+  // 날짜 입력 (모든 예정 상태)
+  if(['1회지원예정','2회예정','3회예정'].includes(status)){
+    const labels={'1회지원예정':'1회차','2회예정':'2회차','3회예정':'3회차'};
+    const dateVal=await showDatePicker(`📅 ${labels[status]} 방문 예정일 선택`);
+    if(dateVal===null)return;
+    siteVisitDate.set(id,dateVal);
+  } else {
+    siteVisitDate.delete(id);
+  }
+
+  siteSupStatus.set(id,status);
+  // N회지원 선택 시 현장상태 자동으로 지원완료 전환 + 완료일시 기록
+  if(['1회지원','2회지원','3회지원'].includes(status)){
+    siteStatus.set(id,'지원완료');
+    const now=new Date().toISOString();
+    siteCompletedAt.set(id,now);
+    await dbPut('status',{id,status:'지원완료',completedAt:now,updatedAt:now});
+  }
+  await dbPut('status',{id,supStatus:status,visitDate:getVisitDate(id),updatedAt:new Date().toISOString()});
+  saveFullStatusToSheet(id);
+  if(isCompleted(id)){selectedIds.delete(id);updateSelBar();}
+  showToast(`📌 ${status} 처리됨`);
+  refreshCardStatus(id);
+  setTimeout(()=>{renderRecommend();renderList();if(nearbyGps)renderNearby();},300);
+}
+
+// 캘린더 날짜 선택 팝업
+function showDatePicker(title, currentDate, showDeleteBtn=false){
+  return new Promise(resolve=>{
+    const old=document.getElementById('date-picker-overlay');
+    if(old)old.remove();
+
+    const today=todayStr();
+    const initVal=currentDate||today;
+    const overlay=document.createElement('div');
+    overlay.id='date-picker-overlay';
+    overlay.style.cssText='position:fixed;inset:0;z-index:99000;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:20px';
+    overlay.innerHTML=`
+      <div style="background:var(--bg2);border-radius:16px;padding:24px;width:100%;max-width:340px;box-shadow:0 8px 32px rgba(0,0,0,.4)">
+        <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:16px;text-align:center">${title}</div>
+        <input type="date" id="date-picker-input" value="${initVal}" min="${today}"
+          style="width:100%;height:52px;border-radius:10px;border:2px solid var(--border);background:var(--bg3);color:var(--text);font-size:18px;padding:0 12px;font-family:'Noto Sans KR',sans-serif;box-sizing:border-box;text-align:center">
+        <div style="display:flex;gap:10px;margin-top:16px">
+          <button onclick="document.getElementById('date-picker-overlay').dataset.result='cancel';document.getElementById('date-picker-overlay').remove()"
+            style="flex:1;height:48px;border-radius:10px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);font-size:15px;font-weight:600;cursor:pointer;font-family:'Noto Sans KR',sans-serif">취소</button>
+          <button onclick="document.getElementById('date-picker-overlay').dataset.result=document.getElementById('date-picker-input').value;document.getElementById('date-picker-overlay').remove()"
+            style="flex:2;height:48px;border-radius:10px;border:none;background:var(--primary);color:#000;font-size:15px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif">확인</button>
+        </div>
+        ${showDeleteBtn?`
+        <button onclick="document.getElementById('date-picker-overlay').dataset.result='__delete__';document.getElementById('date-picker-overlay').remove()"
+          style="width:100%;height:44px;border-radius:10px;border:1px solid var(--red);background:transparent;color:var(--red);font-size:14px;font-weight:600;cursor:pointer;font-family:'Noto Sans KR',sans-serif;margin-top:10px">
+          🗑️ 일정 취소 (지원예정 해제)
+        </button>`:''}
+      </div>`;
+
+    document.body.appendChild(overlay);
+
+    const obs=new MutationObserver(()=>{
+      if(!document.getElementById('date-picker-overlay')){
+        obs.disconnect();
+        const result=overlay.dataset.result;
+        if(result==='__delete__'){resolve('__delete__');return;}
+        resolve(result==='cancel'||!result?null:result);
+      }
+    });
+    obs.observe(document.body,{childList:true});
+  });
+}
+
+// 하위호환 (기존 selectStatus 호출 코드용)
+function selectStatus(id,status){selectSiteStatus(id,status);}
+
+function refreshCardStatus(id){
+  const cardEl=document.getElementById('card-'+id);
+  if(!cardEl)return;
+  // 카드를 보여주고 있는 뷰 파악 (홈=showCheck true, 목록=false)
+  const inRec=cardEl.closest('#rec-cards')!==null;
+  const newCard=siteCardHTML(allSites.find(s=>s.id===id)||{id},inRec);
+  if(newCard) cardEl.outerHTML=newCard;
+}
+function openStatusPickerDetail(){
+  const dd=document.getElementById('detail-dd');
+  if(!dd)return;
+  const isOpen=dd.style.display==='block';
+  closeAllDropdowns();
+  if(!isOpen)dd.style.display='block';
+}
+
+async function saveFullStatusToSheet(id){
+  const url=localStorage.getItem('apps_script_url');if(!url)return;
+  try{
+    const res=await authPost(url,{
+      id,
+      status:getSiteStatus(id),
+      supStatus:getSupStatus(id),
+      visitDate:getVisitDate(id),
+      completedAt:getCompletedAt(id)
+    });
+    const text=await res.text();
+  }catch(e){console.warn('상태 서버 저장 실패:',e);}
+}
+
+// ===================== 카드 HTML =====================
+function siteCardHTML(s,showCheck){
+  const done=isCompleted(s.id),sel=selectedIds.has(s.id);
+  const extra=s.type==='chakgong'&&s.areaHigh?'<span class="badge b-red b-urgent">면적초과</span>':'';
+  const checkHTML=showCheck?`<div class="card-check${sel?' checked':''}" id="check-${s.id}" onclick="event.stopPropagation();toggleSelect('${s.id}')"></div>`:'';
+  const detailLines=
+    s.type==='sanJae'?`<br>종료 ${fd(s.endDate)} · ${esc(s.workType)}`+(s.공사금액?`<br>공사금액 <strong style="color:var(--primary)">${Number(s.공사금액).toLocaleString('ko-KR')}천원</strong>`:'')+(s.현장전화?`<br>현장 ${esc(s.현장전화)}`:'')+(s.사업장전화?` · 사업장 ${esc(s.사업장전화)}`:''):
+    s.type==='chakgong'?`<br>착공예정 ${fd(s.착공예정일)} · ${esc(s.용도)}`:
+    s.type==='hyunjang'?`<br>발굴일 ${esc(s.discoveredDate)}`:'';
+  const numLine=s.type==='sanJae'&&(s.관리번호||s.개시번호)?
+    `<div style="display:flex;gap:6px;margin-bottom:5px;flex-wrap:wrap">
+      ${s.관리번호?`<span style="font-size:12px;background:var(--bdim);color:var(--blue);padding:2px 8px;border-radius:5px;font-weight:600">관리 ${esc(s.관리번호)}</span>`:''}
+      ${s.개시번호?`<span style="font-size:12px;background:var(--bdim);color:var(--blue);padding:2px 8px;border-radius:5px;font-weight:600">개시 ${esc(s.개시번호)}</span>`:''}
+    </div>`:'';
+  const memoCount=siteMemos.get(s.id)?.length||0;
+  const memoTag=memoCount?`<span class="badge b-gray">📝 ${memoCount}</span>`:'';
+  const sup=getSupStatus(s.id);
+  const isSupDone=['1회지원','2회지원','3회지원'].includes(sup);
+  const st=getSiteStatus(s.id);
+  const ca=getCompletedAt(s.id);
+  const caFmt=ca?fmtCompletedAt(ca):'';
+  const stBadge=isSupDone
+    ?`<span class="status-badge st-supported" style="font-size:11px;padding:3px 8px;pointer-events:none">🎯 지원완료</span>`
+    :`<span class="status-badge ${SITE_STATUS_CLASS[st]}" style="font-size:11px;padding:3px 8px;pointer-events:none">${SITE_STATUS_NAME[st]}</span>`;
+  const supBadge=sup&&!isSupDone?`<span class="status-badge ${SUP_STATUS_CLASS[sup]||'st-sup1'}" style="font-size:11px;padding:3px 8px;pointer-events:none">${SUP_STATUS_LABEL[sup]||sup}</span>`:'';
+  const caLine=caFmt?`<div style="font-size:11px;color:var(--text3);margin-bottom:4px">🕐 ${isSupDone?'지원':'완료'}: <strong style="color:var(--text2)">${caFmt}</strong></div>`:'';  return`<div class="site-card${sel?' selected':''}${done?' completed':''}" id="card-${s.id}">
+    <div class="card-stripe ${stripeClass(s)}"></div>
+    <div class="card-top" onclick="openDetail('${s.id}')">
+      ${checkHTML}
+      <div class="card-body">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;flex-wrap:wrap">
+          ${typeLabelHTML(s.type)}
+          ${stBadge}${supBadge}
+        </div>
+        ${numLine}
+        ${caLine}
+        <div id="dday-${s.id}">${ddayHTML(s.id)}</div>
+        <div class="card-name">${esc(s.name)}</div>
+        <div class="card-addr">${esc(s.address)}</div>
+        <div class="badges">${periodBadge(s)}${extra}<span class="badge b-gray">${esc(s.region)}</span>${memoTag}${priorityBtnHTML(s.id)}</div>
+      </div>
+    </div>
+    <div class="card-bottom">
+      <div class="period-info">집중방문기간 <strong>${fd(s.visitStart)} ~ ${fd(s.visitEnd)}</strong>${detailLines}</div>
+      ${statusRowHTML(s.id)}
+    </div>
+  </div>`;
+}
+
+// ===================== 홈 =====================
+let recTypes=new Set(['hyunjang','chakgong','sanJae']);
+const ALL_TYPES=['hyunjang','chakgong','sanJae'];
+
+function recIsAll(){return ALL_TYPES.every(t=>recTypes.has(t));}
+function recToggleAll(){if(recIsAll())recTypes.clear();else ALL_TYPES.forEach(t=>recTypes.add(t));syncRecTabUI();renderRecommend();}
+function recToggleType(t){if(recTypes.has(t))recTypes.delete(t);else recTypes.add(t);syncRecTabUI();renderRecommend();}
+function syncRecTabUI(){
+  const all=recIsAll();
+  document.getElementById('rftab-all').classList.toggle('active',all);
+  [['rftab-hj','hyunjang'],['rftab-ck','chakgong'],['rftab-sj','sanJae']].forEach(([id,type])=>{
+    document.getElementById(id).classList.toggle('active',recTypes.has(type));
+  });
+}
+
+// ⑥ 지역 2줄 그리드
+// ⑥ 지역 그리드 렌더링
+function renderRegionGrid(containerId, currentVal, onclickFn){
+  // 홈: 단일값(string), 목록: Set
+  const isSet = currentVal instanceof Set;
+  document.getElementById(containerId).innerHTML = REGIONS.map(r => {
+    const active = isSet ? currentVal.has(r) : currentVal === r;
+    const cls = active ? (r==='전체' ? 'active-all' : 'active') : '';
+    return `<button class="region-btn${cls?' '+cls:''}" onclick="${onclickFn}('${r}')">${r}</button>`;
+  }).join('');
+}
+
+// 홈 지역 — 단일 선택 유지
+function setRegion(r){
+  currentRegion=r;
+  renderRegionGrid('region-grid', currentRegion, 'setRegion');
+  renderRecommend();
+}
+
+// 전체목록 지역 — 복수 선택
+function setListRegion(r){
+  if(r==='전체'){
+    // 전체 누르면 전체만 선택 or 전체 해제
+    if(listRegion.has('전체')&&listRegion.size===1){
+      // 이미 전체만 → 그대로
+    } else {
+      listRegion=new Set(['전체']);
+    }
+  } else {
+    listRegion.delete('전체'); // 전체 해제
+    if(listRegion.has(r)) listRegion.delete(r);
+    else listRegion.add(r);
+    // 아무것도 없으면 전체로 복귀
+    if(listRegion.size===0) listRegion=new Set(['전체']);
+    // 전부 선택되면 전체로 통합
+    if(REGIONS.slice(1).every(rg=>listRegion.has(rg))) listRegion=new Set(['전체']);
+  }
+  renderRegionGrid('list-region-grid', listRegion, 'setListRegion');
+  renderList();
+}
+
+function recPriority(s){
+  if(s.type==='hyunjang')return 0;
+  if(s.type==='chakgong'&&s.areaHigh)return 1;
+  if(s.type==='chakgong')return 2;
+  return 3;
+}
+function renderRecommend(){
+  const base=(currentRegion==='전체')?allSites:allSites.filter(s=>s.region===currentRegion);
+  const visible=base.filter(s=>s.region!=='기타지역'&&!isCompleted(s.id)&&recTypes.has(s.type));
+
+  // 1순위: 방문예정 현장 (2회차예정/3회차예정) — 날짜 가까운 순
+  const scheduledSites=visible.filter(s=>isScheduled(s.id)).sort((a,b)=>{
+    const da=getVisitDate(a.id)||'9999';
+    const db=getVisitDate(b.id)||'9999';
+    return da.localeCompare(db);
+  });
+
+  // 2순위: 중점관리 현장 (방문예정 아닌 것)
+  const prioritySites=visible.filter(s=>isPriority(s.id)&&!isScheduled(s.id));
+
+  // 3순위: 집중방문기간 현장 (중점관리/방문예정 아닌 것)
+  const periodSites=visible.filter(s=>{
+    if(isPriority(s.id)||isScheduled(s.id))return false;
+    if(!inPeriod(s.visitStart,s.visitEnd))return false;
+    return true;
+  }).sort((a,b)=>{
+    const pa=recPriority(a),pb=recPriority(b);if(pa!==pb)return pa-pb;
+    return((typeof a.visitEnd==='string'?pd(a.visitEnd):a.visitEnd)||today())-((typeof b.visitEnd==='string'?pd(b.visitEnd):b.visitEnd)||today());
+  });
+
+  const total=scheduledSites.length+prioritySites.length+periodSites.length;
+  document.getElementById('rec-count').textContent=total;
+  const c=document.getElementById('rec-cards');
+  let html='';
+
+  // 1순위: 방문예정 섹션 (항상 표시)
+  html+=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+    <span style="font-size:13px;font-weight:700;color:#f97316">📅 방문 예정 현장</span>
+    <span style="font-size:12px;color:var(--text3)">${scheduledSites.length}개</span>
+  </div>`;
+  if(scheduledSites.length>0){
+    html+=scheduledSites.map(s=>siteCardHTML(s,true)).join('');
+  } else {
+    html+=`<div style="padding:10px 12px;background:var(--bg3);border-radius:10px;font-size:13px;color:var(--text3);margin-bottom:4px">2회차·3회차 예정 현장이 없습니다</div>`;
+  }
+
+  // 중점관리 섹션
+  html+=`<div style="display:flex;align-items:center;gap:8px;margin:${scheduledSites.length?'12px':'0'} 0 8px">
+    <span style="font-size:13px;font-weight:700;color:#ca8a04">⭐ 중점 관리 현장</span>
+    <span style="font-size:12px;color:var(--text3)">${prioritySites.length}개</span>
+  </div>`;
+  if(prioritySites.length>0){
+    html+=prioritySites.map(s=>siteCardHTML(s,true)).join('');
+  } else {
+    html+=`<div style="padding:10px 12px;background:var(--bg3);border-radius:10px;font-size:13px;color:var(--text3);margin-bottom:4px">현장 카드의 ☆ 중점관리 버튼을 눌러 추가하세요</div>`;
+  }
+
+  // 집중방문기간 섹션
+  if(periodSites.length>0){
+    html+=`<div style="display:flex;align-items:center;gap:8px;margin:12px 0 8px"><span style="font-size:13px;font-weight:700;color:var(--green)">🟢 집중방문기간 현장</span><span style="font-size:12px;color:var(--text3)">${periodSites.length}개</span></div>`;
+    html+=periodSites.map(s=>siteCardHTML(s,true)).join('');
+  } else if(prioritySites.length===0&&scheduledSites.length===0){
+    html+=`<div style="margin-top:8px;padding:12px;background:var(--bg3);border-radius:10px;font-size:13px;color:var(--text3);text-align:center">집중방문기간 현장이 없습니다</div>`;
+  }
+  c.innerHTML=html;
+}
+
+// ① ② 전체목록 필터
+function isAllSelected(){return ALL_TYPES.every(t=>listTypes.has(t));}
+function toggleAll(){if(isAllSelected())listTypes.clear();else ALL_TYPES.forEach(t=>listTypes.add(t));syncTypeTabUI();renderList();}
+function toggleType(t){if(listTypes.has(t))listTypes.delete(t);else listTypes.add(t);syncTypeTabUI();renderList();}
+function syncTypeTabUI(){
+  const all=isAllSelected();
+  document.getElementById('ftab-all').classList.toggle('active',all);
+  [['hj','hyunjang'],['ck','chakgong'],['sj','sanJae']].forEach(([k,type])=>{
+    document.getElementById('ftab-'+k).classList.toggle('active',listTypes.has(type));
+  });
+}
+
+// ① 상태 필터
+const ALL_STATUSES=['미확인','확인불가','공사전','공사중','추가지원','공사완료','지원완료'];
+function isAllStatusSelected(){return ALL_STATUSES.every(s=>listStatuses.has(s));}
+function toggleStatusAll(){
+  if(isAllStatusSelected())listStatuses.clear();else ALL_STATUSES.forEach(s=>listStatuses.add(s));
+  syncStatusTabUI();renderList();
+}
+function toggleStatus(s){
+  if(listStatuses.has(s))listStatuses.delete(s);else listStatuses.add(s);
+  syncStatusTabUI();renderList();
+}
+function syncStatusTabUI(){
+  const all=isAllStatusSelected();
+  document.getElementById('fst-all').classList.toggle('active',all);
+  [['fst-u','미확인'],['fst-uc','확인불가'],['fst-0','공사전'],['fst-1','공사중'],['fst-4','추가지원'],['fst-2','공사완료'],['fst-3','지원완료']].forEach(([id,st])=>{
+    document.getElementById(id)?.classList.toggle('active',listStatuses.has(st));
+  });
+}
+
+// ② 공사종류 필터
+function isAllWorkSelected(){return WORK_TYPES.every(w=>listWorks.has(w));}
+function toggleWorkAll(){
+  if(isAllWorkSelected())listWorks.clear();else WORK_TYPES.forEach(w=>listWorks.add(w));
+  syncWorkTabUI();renderList();
+}
+function toggleWork(w){
+  if(listWorks.has(w))listWorks.delete(w);else listWorks.add(w);
+  syncWorkTabUI();renderList();
+}
+function syncWorkTabUI(){
+  const all=isAllWorkSelected();
+  document.getElementById('fwt-all').classList.toggle('active',all);
+  WORK_TYPES.forEach((w,i)=>{
+    document.getElementById('fwt-'+i)?.classList.toggle('active',listWorks.has(w));
+  });
+}
+
+function renderList(){
+  const q=(document.getElementById('list-search')?.value||'').toLowerCase();
+  const filtered=allSites.filter(s=>{
+    if(!listTypes.has(s.type))return false;
+    if(!listRegion.has('전체')&&!listRegion.has(s.region))return false;
+    // ① 상태 필터
+    const st=getSiteStatus(s.id);
+    const sup=getSupStatus(s.id);
+    const isSupDone=['1회지원','2회지원','3회지원'].includes(sup);
+    const isExtra=isScheduled(s.id); // 2회예정/3회예정
+    if(isSupDone){
+      // N회지원 → 지원완료 탭으로 분류
+      if(!listStatuses.has('지원완료'))return false;
+    } else if(isExtra){
+      if(!listStatuses.has('추가지원'))return false;
+    } else {
+      if(!listStatuses.has(st))return false;
+    }
+    // ② 공사종류 필터 — 착공신고는 용도를 쓰므로 workType 필터 스킵
+    if(s.type!=='chakgong'&&!listWorks.has(s.workType||'일반공사'))return false;
+    if(q&&!`${s.name} ${s.address} ${s.workType||''} ${s.사업장명||''} ${s.사업주||''} ${s.용도||''}`.toLowerCase().includes(q))return false;
+    return true;
+  }).sort((a,b)=>{
+    const pa=recPriority(a),pb=recPriority(b);if(pa!==pb)return pa-pb;
+    return((typeof a.visitStart==='string'?pd(a.visitStart):a.visitStart)||new Date(0))-((typeof b.visitStart==='string'?pd(b.visitStart):b.visitStart)||new Date(0));
+  });
+  const c=document.getElementById('list-cards');
+  const countEl=document.getElementById('list-count');
+  if(countEl)countEl.textContent=filtered.length;
+  if(!filtered.length){c.innerHTML='<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg><p>검색 결과가 없습니다.</p></div>';return;}
+  c.innerHTML=filtered.map(s=>siteCardHTML(s,false)).join('');
+}
+
+// ===================== SETTINGS =====================
+function setHeaderSub(t){document.getElementById('header-sub').textContent=t;}
+function renderSettings(){
+  const url=localStorage.getItem('apps_script_url')||'';
+  document.getElementById('url-display').textContent=url?url.substring(0,50)+'...':'미설정 (탭하여 입력)';
+  const title=localStorage.getItem('app_title')||'한국건설안전공사 현장관리 - 당진시';
+  const tEl=document.getElementById('title-display');if(tEl)tEl.textContent=title;
+  const name=localStorage.getItem('officer_name')||'';
+  const phone=localStorage.getItem('officer_phone')||'';
+  const oEl=document.getElementById('officer-display');
+  if(oEl)oEl.textContent=(name||phone)?[name,phone].filter(Boolean).join(' · '):'미설정 (탭하여 입력)';
+  const kakaoKey=localStorage.getItem('kakao_api_key')||'';
+  const kEl=document.getElementById('kakao-key-display');
+  if(kEl)kEl.textContent=kakaoKey?'✅ JavaScript 키 설정됨':'미설정 — Nominatim 사용 중';
+  const total={현장발굴:allSites.filter(s=>s.type==='hyunjang').length,착공신고:allSites.filter(s=>s.type==='chakgong').length,산재가입:allSites.filter(s=>s.type==='sanJae').length};
+  const active={현장발굴:allSites.filter(s=>s.type==='hyunjang'&&!isCompleted(s.id)).length,착공신고:allSites.filter(s=>s.type==='chakgong'&&!isCompleted(s.id)).length,산재가입:allSites.filter(s=>s.type==='sanJae'&&!isCompleted(s.id)).length};
+  document.getElementById('stats-grid').innerHTML=Object.entries(total).map(([l,n])=>`<div class="stat-box"><div class="stat-n">${active[l]}<span style="font-size:13px;color:var(--text3)">/${n}</span></div><div class="stat-l">${l}</div><div style="font-size:11px;color:var(--text3)">방문가능/전체</div></div>`).join('');
+}
+
+// ===================== SELECT =====================
+function toggleSelect(id){
+  if(isCompleted(id))return;
+  if(selectedIds.has(id))selectedIds.delete(id);
+  else{if(selectedIds.size>=20){showToast('⚠️ 최대 20개');return;}selectedIds.add(id);}
+  document.getElementById('check-'+id)?.classList.toggle('checked',selectedIds.has(id));
+  document.getElementById('card-'+id)?.classList.toggle('selected',selectedIds.has(id));
+  updateSelBar();
+}
+function updateSelBar(){const b=document.getElementById('sel-bar');document.getElementById('sel-count').textContent=selectedIds.size;b.classList.toggle('show',selectedIds.size>0);}
+function clearSelection(){selectedIds.clear();renderRecommend();renderList();updateSelBar();}
+
+// 현재 보이는 카드 전체 선택
+function selectAllVisible(view){
+  const containerId=view==='rec'?'rec-cards':view==='nearby'?'nearby-cards':'list-cards';
+  const cards=document.querySelectorAll(`#${containerId} .site-card`);
+  let added=0;
+  cards.forEach(card=>{
+    const id=card.id.replace('card-','');
+    if(!isCompleted(id)&&!selectedIds.has(id)){
+      if(selectedIds.size+added>=20){showToast('⚠️ 최대 20개까지 선택 가능');return;}
+      selectedIds.add(id);added++;
+      card.classList.add('selected');
+      const chk=document.getElementById('check-'+id);
+      if(chk)chk.classList.add('checked');
+    }
+  });
+  updateSelBar();
+  if(added>0)showToast(`✅ ${selectedIds.size}개 선택됨`);
+}
+
+// 재방문예정 현장만 선택
+// 한국 공휴일 (2025~2026)
+const KR_HOLIDAYS=new Set([
+  '2025-01-01','2025-01-28','2025-01-29','2025-01-30',
+  '2025-03-01','2025-05-05','2025-05-06','2025-06-06',
+  '2025-08-15','2025-10-03','2025-10-05','2025-10-06','2025-10-07','2025-10-09',
+  '2025-12-25',
+  '2026-01-01','2026-02-16','2026-02-17','2026-02-18',
+  '2026-03-01','2026-05-05','2026-05-24','2026-06-06',
+  '2026-08-15','2026-09-24','2026-09-25','2026-09-26',
+  '2026-10-03','2026-10-09','2026-12-25',
+]);
+function isBusinessDay(dateStr){
+  const d=new Date(dateStr+'T00:00:00');
+  const dow=d.getDay(); // 0=일,6=토
+  if(dow===0||dow===6)return false;
+  if(KR_HOLIDAYS.has(dateStr))return false;
+  return true;
+}
+function nextBizDayStr(fromStr, skip=1){
+  const d=new Date(fromStr+'T00:00:00');
+  let count=0;
+  while(count<skip){
+    d.setDate(d.getDate()+1);
+    const s=d.toISOString().split('T')[0];
+    if(isBusinessDay(s))count++;
+  }
+  return d.toISOString().split('T')[0];
+}
+
+function selectScheduledOnly(){
+  const today=todayStr();
+  const day1=nextBizDayStr(today,1); // 다음 영업일만
+
+  const all=allSites.filter(s=>isScheduled(s.id)&&!isCompleted(s.id));
+  if(!all.length){showToast('방문예정 현장이 없습니다');return;}
+
+  const primary=all.filter(s=>getVisitDate(s.id)===day1);
+  if(!primary.length){
+    const d1fmt=day1.replace(/-/g,'/').slice(5);
+    showToast(`📅 ${d1fmt} 방문예정 현장이 없습니다`);return;
+  }
+
+  let added=0;
+  for(const s of primary){
+    if(selectedIds.has(s.id))continue;
+    if(selectedIds.size+added>=20)break;
+    selectedIds.add(s.id);added++;
+    const card=document.getElementById('card-'+s.id);
+    if(card){card.classList.add('selected');const chk=document.getElementById('check-'+s.id);if(chk)chk.classList.add('checked');}
+  }
+  updateSelBar();
+  if(added>0){
+    const d1fmt=day1.replace(/-/g,'/').slice(5);
+    showToast(`📅 ${d1fmt} 방문예정 ${selectedIds.size}개 선택됨`);
+    renderRecommend();
+  }
+}
+
+// ===================== ROUTE =====================
+const ORIGIN_FIXED_ADDR='경기도 화성시 향남읍 하길로 69';
+const ORIGIN_FIXED_NAME='향남읍';
+const ORIGIN_FIXED_COORDS={lat:37.07246,lng:126.88502};
+const BATCH_SIZE=3;
+let originMode='fixed',gpsCoords=null,routeBatches=[];
+
+function getSelSites(){return[...selectedIds].map(id=>allSites.find(s=>s.id===id)).filter(Boolean);}
+function optimizeRoute(origin, sites){
+  // 전체 최근접 이웃 정렬 — 각 구간의 목적지가 다음 구간의 출발점이 됨
+  const rem=[...sites]; const ordered=[]; let cLat=origin.lat, cLng=origin.lng;
+  while(rem.length){
+    let best=0, bestD=Infinity;
+    rem.forEach((s,i)=>{
+      const d=Math.pow((s.lat||0)-cLat,2)+Math.pow((s.lng||0)-cLng,2);
+      if(d<bestD){bestD=d;best=i;}
+    });
+    const s=rem.splice(best,1)[0];
+    ordered.push(s);
+    cLat=s.lat||cLat; cLng=s.lng||cLng;
+  }
+  // BATCH_SIZE 단위로 묶되, 각 구간의 마지막 현장 좌표를 다음 구간 시작점으로 사용
+  // → 이미 ordered가 연속 최근접으로 정렬됐으므로 그대로 슬라이싱
+  return ordered;
+}
+function openRouteModal(){
+  const sites=getSelSites();if(!sites.length)return;
+  document.getElementById('route-count').textContent=sites.length;
+  document.getElementById('route-modal').classList.remove('hidden');
+  document.getElementById('route-list').innerHTML='';
+  document.getElementById('route-origin-text').textContent='📡 티맵이 현위치를 자동 감지합니다';
+  document.getElementById('gps-loading').style.display='flex';
+  if(navigator.geolocation){
+    navigator.geolocation.getCurrentPosition(
+      pos=>{
+        gpsCoords={lat:pos.coords.latitude,lng:pos.coords.longitude};
+        document.getElementById('route-origin-text').textContent=`📡 현위치 기준 (${gpsCoords.lat.toFixed(4)}, ${gpsCoords.lng.toFixed(4)})`;
+        document.getElementById('gps-loading').style.display='none';
+        renderRouteBatches();
+      },
+      ()=>{
+        document.getElementById('route-origin-text').textContent='⚠️ GPS 미수신 — 향남읍 기준으로 정렬';
+        document.getElementById('gps-loading').style.display='none';
+        gpsCoords=null;
+        renderRouteBatches();
+      },
+      {enableHighAccuracy:true,timeout:5000,maximumAge:30000}
+    );
+  } else {
+    document.getElementById('route-origin-text').textContent='GPS 미지원 — 향남읍 기준으로 정렬';
+    document.getElementById('gps-loading').style.display='none';
+    renderRouteBatches();
+  }
+}
+function closeRouteModal(){document.getElementById('route-modal').classList.add('hidden');}
+
+// 경로 모달에서 현장 클릭 → 상세화면 오픈, 뒤로가기 시 경로 모달 복원
+let _fromRoute=false;
+let _fromMap=false;
+function openDetailFromRoute(id){
+  _fromRoute=true;
+  document.getElementById('route-modal').classList.add('hidden');
+  openDetail(id);
+}
+function openDetailFromMap(id){
+  _fromMap=true;
+  // Leaflet 팝업 닫기
+  if(siteMapObj)siteMapObj.closePopup();
+  openDetail(id);
+}
+function closeDetail(){
+  document.getElementById('detail-modal').classList.remove('open');
+  currentDetailId=null;
+  localStorage.removeItem('last_detail_id');
+  if(_fromRoute){
+    _fromRoute=false;
+    document.getElementById('route-modal').classList.remove('hidden');
+    setTimeout(()=>renderRouteBatches(),100);
+  }
+  if(_fromMap){
+    _fromMap=false;
+    showView('map');
+    setTimeout(()=>{if(siteMapObj)siteMapObj.invalidateSize();},200);
+  }
+}
+function renderRouteBatches(){
+  const sites=getSelSites();
+  const valid=sites.filter(s=>s.lat&&s.lng),noCoord=sites.filter(s=>!s.lat||!s.lng);
+  const origin=(originMode==='gps'&&gpsCoords)?gpsCoords:ORIGIN_FIXED_COORDS;
+  const ordered=optimizeRoute(origin,valid);
+  routeBatches=[];
+  for(let i=0;i<ordered.length;i+=BATCH_SIZE)routeBatches.push(ordered.slice(i,i+BATCH_SIZE));
+  const bs="height:40px;padding:0 14px;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;border:none;";
+  let html='';
+  routeBatches.forEach((batch,bi)=>{
+    html+=`<div style="background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:800;margin-bottom:10px"><span style="color:var(--primary)">${bi+1}구간</span> <span style="font-size:14px;font-family:'Noto Sans KR',sans-serif;font-weight:400;color:var(--text2)">${batch.length}개 현장</span></div>`;
+    batch.forEach((s,si)=>{
+      const sup=getSupStatus(s.id);
+      const isSupDone=['1회지원','2회지원','3회지원'].includes(sup);
+      const st=getSiteStatus(s.id);
+      const stLabel=isSupDone?'🎯 지원완료':(SITE_STATUS_NAME[st]||st);
+      const stColor=isSupDone?'var(--green)':st==='공사완료'?'var(--blue)':st==='공사중'?'var(--primary)':'var(--text3)';
+      html+=`<div onclick="openDetailFromRoute('${s.id}')" style="display:flex;align-items:flex-start;gap:10px;padding:10px 0;cursor:pointer;${si<batch.length-1?'border-bottom:1px solid var(--border)':''}">
+        <div style="width:26px;height:26px;border-radius:50%;background:var(--primary);color:#000;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">${bi*BATCH_SIZE+si+1}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:15px;font-weight:600">${esc(s.name)}</div>
+          <div style="font-size:12px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(s.address)}</div>
+          <div style="font-size:11px;color:${stColor};margin-top:2px">${stLabel}</div>
+        </div>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;color:var(--text3);flex-shrink:0;margin-top:4px"><path d="M9 18l6-6-6-6"/></svg>
+      </div>`;
+    });
+    html+=`<div style="display:flex;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+      <button onclick="tmapLaunch(${bi},false)" style="${bs}flex:1;background:var(--bg2);color:var(--text);border:1px solid var(--border)">🗺️ ${bi+1}구간 미리보기</button>
+      <button onclick="tmapLaunch(${bi},true)" style="${bs}flex:1;background:var(--primary);color:#000">🚗 ${bi+1}구간 출발</button>
+    </div></div>`;
+  });
+  if(noCoord.length){
+    html+=`<div style="background:var(--rdim);border:1px solid var(--red);border-radius:10px;padding:12px;margin-bottom:10px">
+      <div style="font-size:14px;font-weight:600;color:var(--red);margin-bottom:6px">⚠️ 좌표 없음 — 경로 제외 (${noCoord.length}개)</div>`;
+    noCoord.forEach(s=>{html+=`<div style="font-size:13px;color:var(--text2);padding:2px 0">${esc(s.name)}</div>`;});
+    html+=`<div style="font-size:12px;color:var(--text3);margin-top:6px">🔄 데이터 새로고침 후 다시 시도하세요</div></div>`;
+  }
+  document.getElementById('route-list').innerHTML=html||'<div style="text-align:center;padding:30px;color:var(--text3);font-size:15px">선택된 현장이 없습니다</div>';
+}
+function tmapLaunch(batchIdx,goNow){
+  const batch=routeBatches[batchIdx];if(!batch||!batch.length)return;
+  const last=batch[batch.length-1],vias=batch.slice(0,-1);
+  let p=[];
+  if(batchIdx===0){
+    // 1구간: 출발지 좌표 안 넣음 → 티맵이 현위치 GPS 자동 사용
+    // (출발지 명시하면 앱 GPS가 아닌 저장된 좌표로 출발해서 오류 발생)
+  } else {
+    const prevLast=routeBatches[batchIdx-1][routeBatches[batchIdx-1].length-1];
+    p.push(`startname=${encodeURIComponent(prevLast.name)}`);
+    p.push(`startx=${prevLast.lng}`);p.push(`starty=${prevLast.lat}`);
+  }
+  vias.forEach((s,i)=>{p.push(`via${i+1}name=${encodeURIComponent(s.name)}`);p.push(`via${i+1}x=${s.lng}`);p.push(`via${i+1}y=${s.lat}`);});
+  p.push(`goalname=${encodeURIComponent(last.name)}`);p.push(`goalx=${last.lng}`);p.push(`goaly=${last.lat}`);
+  p.push('reqCoordType=WGS84GEO&resCoordType=WGS84GEO');
+  if(goNow)p.push('fullscreen=1');
+  launchTmap(`tmap://route?${p.join('&')}`);
+}
+
+// ===================== ⑤ 메모 =====================
+// ===================== ⑤ 메모 (서버 단일 소스) =====================
+// 로컬 캐시 없이 서버에서 직접 읽고 씀 → 동기화 문제 없음
+
+async function loadMemos(){
+  // 로컬 IndexedDB 메모는 더 이상 사용 안 함 (하위호환 위해 비워둠)
+  siteMemos=new Map();
+}
+
+// 서버에서 현장 메모 가져오기
+async function fetchMemosFromServer(id){
+  const url=localStorage.getItem('apps_script_url');
+  if(!url){ showToast('⚠️ URL 미설정'); return []; }
+  try{
+    const res=await authGet(url,"?action=statusAndMemos");
+    const data=await res.json();
+    if(data.error){ showToast('❌ 서버오류: '+data.error); return []; }
+    if(!data.memos){ showToast('⚠️ 서버에 메모 데이터 없음'); return []; }
+    const memos=Array.isArray(data.memos[id])?data.memos[id]:[];
+    // 디버그: 서버 응답 확인
+    return memos;
+  }catch(e){
+    showToast('❌ 메모 조회 실패: '+e.message);
+    console.error('[메모조회 실패]',e);
+    return [];
+  }
+}
+
+// 서버에 메모 저장
+async function saveMemosToServer(id, memos){
+  const url=localStorage.getItem('apps_script_url');
+  if(!url)throw new Error('URL 미설정');
+  try{
+    const res=await authPost(url,{action:'saveMemo',id,memos});
+    const text=await res.text();
+    let data;
+    try{ data=JSON.parse(text); }
+    catch(e){ throw new Error('응답 파싱 실패: '+text.substring(0,100)); }
+    if(data.error)throw new Error(data.error);
+    return data;
+  }catch(e){
+    console.error('[메모저장 실패]', e);
+    throw e;
+  }
+}
+
+// 메모 행 HTML 생성
+function getMemoRows(memos, id){
+  if(!memos||!memos.length)return'';
+  return memos.map((m,i)=>`
+    <div class="memo-row" id="memo-row-${id}-${i}">
+      <input class="memo-date" type="date" id="memo-date-${id}-${i}" value="${m.date||''}">
+      <textarea class="memo-text" id="memo-text-${id}-${i}" rows="1" placeholder="내용 입력..."></textarea>
+      <button class="memo-del" onclick="deleteMemoRow('${id}',${i})" title="삭제">✕</button>
+    </div>`).join('');
+}
+
+function setMemoValues(memos, id){
+  (memos||[]).forEach((m,i)=>{
+    const ta=document.getElementById(`memo-text-${id}-${i}`);
+    if(ta){ta.value=m.text||'';autoResize(ta);}
+  });
+}
+function autoResize(el){el.style.height='auto';el.style.height=el.scrollHeight+'px';}
+
+// 메모 섹션 렌더 (memos 배열 직접 받음)
+function renderMemoSection(id, memos){
+  siteMemos.set(id, memos||[]);
+  const sec=document.getElementById('memo-section-'+id);
+  if(!sec)return;
+  const rows=getMemoRows(memos, id);
+  sec.innerHTML=`
+    ${rows||'<div style="font-size:13px;color:var(--text3);padding:8px 0">메모 없음 — 아래 버튼으로 추가하세요</div>'}
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button class="memo-add" style="flex:1" onclick="addMemoRow('${id}')">+ 메모 추가</button>
+      <button id="memo-sync-btn-${id}" onclick="saveMemoSection('${id}')"
+        style="height:34px;padding:0 16px;background:var(--green);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;flex-shrink:0">
+        💾 저장
+      </button>
+    </div>`;
+  setTimeout(()=>{setMemoValues(memos, id);document.querySelectorAll('.memo-text').forEach(autoResize);},20);
+  // 카드 메모 카운트 갱신
+  const cardBadges=document.querySelector(`#card-${id} .badges`);
+  if(cardBadges){
+    const old=cardBadges.querySelector('.memo-tag');if(old)old.remove();
+    if(memos&&memos.length){const t=document.createElement('span');t.className='badge b-gray memo-tag';t.textContent=`📝 ${memos.length}`;cardBadges.appendChild(t);}
+  }
+}
+
+// + 메모 추가 버튼
+function addMemoRow(id){
+  const memos=getCurrentMemos(id);
+  memos.push({date:fdISO(new Date()),text:''});
+  renderMemoSection(id, memos);
+}
+
+// 행 삭제
+function deleteMemoRow(id, idx){
+  const memos=getCurrentMemos(id);
+  memos.splice(idx,1);
+  renderMemoSection(id, memos);
+}
+
+// 현재 화면의 메모 값을 DOM에서 읽어서 반환
+function getCurrentMemos(id){
+  const memos=siteMemos.get(id)||[];
+  memos.forEach((m,i)=>{
+    const dateEl=document.getElementById(`memo-date-${id}-${i}`);
+    const textEl=document.getElementById(`memo-text-${id}-${i}`);
+    if(dateEl)m.date=dateEl.value;
+    if(textEl)m.text=textEl.value;
+  });
+  return memos;
+}
+
+// 💾 저장 버튼 — 서버에 직접 저장
+async function saveMemoSection(id){
+  const btn=document.getElementById('memo-sync-btn-'+id);
+  if(btn){btn.textContent='⏳ 저장 중...';btn.disabled=true;}
+  try{
+    const memos=getCurrentMemos(id);
+    await saveMemosToServer(id, memos);
+    siteMemos.set(id, memos);
+    showToast(`✅ 메모 저장 완료 (${memos.length}개)`);
+    // 카드 뱃지 갱신
+    const cardBadges=document.querySelector(`#card-${id} .badges`);
+    if(cardBadges){
+      const old=cardBadges.querySelector('.memo-tag');if(old)old.remove();
+      if(memos.length){const t=document.createElement('span');t.className='badge b-gray memo-tag';t.textContent=`📝 ${memos.length}`;cardBadges.appendChild(t);}
+    }
+  }catch(e){
+    showToast('❌ 저장 실패: '+e.message);
+  }finally{
+    if(btn){btn.textContent='💾 저장';btn.disabled=false;}
+  }
+}
+
+// 하위 호환용 (사용 안 함)
+function refreshMemoSection(id){ renderMemoSection(id, siteMemos.get(id)||[]); }
+
+// ===================== DETAIL =====================
+async function openDetail(id){
+  const s=allSites.find(x=>x.id===id);if(!s)return;
+  currentDetailId=id;
+  localStorage.setItem('last_detail_id',id);
+  document.getElementById('dm-title').textContent=s.name;
+  const doneBtn=document.getElementById('dm-done-btn');
+  doneBtn.textContent='상태 변경';doneBtn.style.borderColor='var(--green)';doneBtn.style.color='var(--green)';
+  const inP=inPeriod(s.visitStart,s.visitEnd);
+  const pct=(()=>{const st=typeof s.visitStart==='string'?pd(s.visitStart):s.visitStart,en=typeof s.visitEnd==='string'?pd(s.visitEnd):s.visitEnd,td=today();if(!st||!en||td<st)return 0;if(td>en)return 100;return Math.round((td-st)/(en-st)*100);})();
+  const numBox=s.type==='sanJae'?`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+      <div style="background:var(--bdim);border:1px solid var(--blue);border-radius:10px;padding:12px;text-align:center">
+        <div style="font-size:12px;color:var(--blue);font-weight:600;margin-bottom:4px">사업장관리번호</div>
+        <div style="font-family:'Malgun Gothic','맑은 고딕','Apple SD Gothic Neo',sans-serif;font-size:32px;font-weight:700;color:var(--text);letter-spacing:1px">${esc(s.관리번호)||'—'}</div>
+      </div>
+      <div style="background:var(--bdim);border:1px solid var(--blue);border-radius:10px;padding:12px;text-align:center">
+        <div style="font-size:12px;color:var(--blue);font-weight:600;margin-bottom:4px">사업장개시번호</div>
+        <div style="font-family:'Malgun Gothic','맑은 고딕','Apple SD Gothic Neo',sans-serif;font-size:32px;font-weight:700;color:var(--text);letter-spacing:1px">${esc(s.개시번호)||'—'}</div>
+      </div>
+    </div>`:
+    `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center"><div style="font-size:12px;color:var(--text3);font-weight:600;margin-bottom:4px">사업장관리번호</div><div style="font-size:16px;color:var(--text3)">—</div></div>
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center"><div style="font-size:12px;color:var(--text3);font-weight:600;margin-bottom:4px">사업장개시번호</div><div style="font-size:16px;color:var(--text3)">—</div></div>
+    </div>`;
+  let details='';
+  if(s.type==='sanJae')details=`<div class="dm-section"><div class="dm-sec-title" style="color:var(--c-sj)">산재가입 현장 정보</div>${dr('현장명',s.name)}${dr('현장주소',s.address)}${dr('현장전화',s.현장전화)}${dr('사업장명',s.사업장명)}${dr('사업주',s.사업주)}${dr('사업장전화',s.사업장전화)}${dr('공사금액',s.공사금액?Number(s.공사금액).toLocaleString('ko-KR')+'천원':'')}${dr('공사시작일',fdFull(s.startDate))}${dr('공사종료일',fdFull(s.endDate))}${dr('공사종류',s.workType)}${dr('지역',s.region)}</div>`;
+  else if(s.type==='chakgong')details=`<div class="dm-section"><div class="dm-sec-title" style="color:var(--c-ck)">착공신고 현장 정보</div>${dr('대지위치',s.address)}${dr('용도',s.용도)}${dr('건축면적',s.건축면적?(s.건축면적+'㎡'):'')}${dr('연면적',s.연면적?(s.연면적+'㎡'):'')}${dr('착공예정일',fdFull(s.착공예정일))}${dr('착공신고일',fdFull(s.착공신고일))}${dr('현상황',s.현상황)}${dr('비고',s.비고)}${s.areaHigh?'<div style="margin-top:8px;padding:8px;background:var(--rdim);border-radius:8px;font-size:14px;color:var(--red)">⚠️ 면적초과 — 기술지원 우선 대상</div>':''}</div>`;
+  else if(s.type==='hyunjang')details=`<div class="dm-section"><div class="dm-sec-title" style="color:var(--c-hj)">현장발굴 정보</div>${dr('현장주소',s.address)}${dr('발굴일자',fdFull(s.discoveredDate))}${dr('현상황',s.현상황)}${dr('공사종류',s.workType)}${dr('비고',s.비고)}</div>`;
+  const curSt=getStatus(id);
+  document.getElementById('dm-body').innerHTML=`
+    <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px;align-items:center">
+      ${typeLabelHTML(s.type)}${periodBadge(s)}
+      <span class="badge b-gray">${esc(s.region)}</span>
+      <span id="detail-status-badge" class="status-badge ${curSt?STATUS_CLASS[curSt]:'st-none'}" style="cursor:pointer" onclick="event.stopPropagation();openStatusPickerDetail()">${curSt?STATUS_LABEL_FULL[curSt]:'상태 선택'} ▾</span>
+    </div>
+    <!-- ③ 상세 화면 인라인 드롭다운 (id=detail-dd, 카드와 분리) -->
+    <div id="detail-dd" style="display:none">
+      ${statusRowHTML(id,false)}
+    </div>
+    ${numBox}
+    <div class="dm-section"><div class="dm-sec-title">집중방문기간</div>
+      <div style="font-size:18px;font-weight:700;margin-bottom:6px">${fdFull(s.visitStart)} ~ ${fdFull(s.visitEnd)}</div>
+      <div style="font-size:14px;color:var(--text2);margin-bottom:8px">${inP?'🟢 현재 방문 기간 중':'⚪ 방문 기간 외'}</div>
+      <div class="dm-period-bar"><div class="dm-period-fill" style="width:${pct}%"></div></div>
+    </div>
+    ${details}
+    <!-- ⑤ 메모 섹션 — 서버에서 로드 -->
+    <div class="dm-section">
+      <div class="dm-sec-title">📝 메모</div>
+      <div id="memo-section-${id}">
+        <div style="text-align:center;padding:16px;color:var(--text3);font-size:14px">⏳ 메모 불러오는 중...</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <button onclick="openKakaoMap('${esc(s.address)}')" style="flex:1;height:72px;background:#FEE500;color:#3C1E1E;border:none;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;font-family:'Noto Sans KR',sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px"><span style="font-size:22px">🗺️</span>카카오맵</button>
+      <button onclick="openNaverMap('${esc(s.address)}')" style="flex:1;height:72px;background:#03C75A;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;font-family:'Noto Sans KR',sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px"><span style="font-size:22px">🗺️</span>네이버지도</button>
+      <button id="tmap-btn-${s.id}" onclick="handleTmapBtn('${esc(s.address)}','${esc(s.name)}',${s.lat||'null'},${s.lng||'null'},'${s.id}')" style="flex:1;height:72px;background:#E8001C;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;font-family:'Noto Sans KR',sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px"><span style="font-size:22px">🚗</span>티맵 경로</button>
+    </div>`;
+  // 모달 오픈 후 서버에서 메모 로드하여 표시
+  document.getElementById('detail-modal').classList.add('open');
+  fetchMemosFromServer(id).then(memos=>renderMemoSection(id, memos));
+}
+
+async function handleTmapBtn(addr,name,lat,lng,siteId){
+  const btn=document.getElementById('tmap-btn-'+siteId);
+  if(btn){btn.innerHTML='<span style="font-size:18px">📡</span>GPS 수신 중...';btn.disabled=true;}
+  await tmapDetailGo(addr,name,lat,lng);
+  if(btn){btn.innerHTML='<span style="font-size:22px">🚗</span>티맵 경로';btn.disabled=false;}
+}
+function openStatusPickerDetail(){
+  const dd=document.getElementById('detail-dd');
+  if(!dd)return;
+  const isOpen=dd.style.display==='block';
+  closeAllDropdowns();
+  if(!isOpen)dd.style.display='block';
+}
+function dr(k,v){if(!v||v==='-'||v==='')return'';return`<div class="dm-row"><div class="dm-key">${k}</div><div class="dm-val">${esc(String(v))}</div></div>`;}
+function openKakaoMap(addr){window.open(`https://map.kakao.com/link/search/${encodeURIComponent(addr)}`,'_blank');}
+function openNaverMap(addr){window.open(`https://map.naver.com/v5/search/${encodeURIComponent(addr)}`,'_blank');}
+function tmapDetailView(addr,name){
+  const s=currentDetailId?allSites.find(x=>x.id===currentDetailId):null;
+  const lat=s?.lat,lng=s?.lng;
+  const oLat=gpsCoords?gpsCoords.lat:ORIGIN_FIXED_COORDS.lat,oLng=gpsCoords?gpsCoords.lng:ORIGIN_FIXED_COORDS.lng,oName=gpsCoords?'현위치':ORIGIN_FIXED_NAME;
+  let p=[`startname=${encodeURIComponent(oName)}`,`startx=${oLng}`,`starty=${oLat}`,`goalname=${encodeURIComponent(name)}`];
+  if(lat&&lng){p.push(`goalx=${lng}`);p.push(`goaly=${lat}`);}else p.push(`goal=${encodeURIComponent(addr)}`);
+  p.push('reqCoordType=WGS84GEO&resCoordType=WGS84GEO');
+  launchTmap(`tmap://route?${p.join('&')}`);
+  // 티맵 미설치 시 플레이스토어 안내 (앱 화면 유지)
+}
+async function tmapDetailGo(addr,name,lat,lng){
+  // GPS 수신 시도 (최대 5초 대기)
+  let oLat,oLng,oName;
+  try{
+    const pos=await new Promise((res,rej)=>{
+      navigator.geolocation.getCurrentPosition(res,rej,{
+        enableHighAccuracy:true,timeout:5000,maximumAge:10000
+      });
+    });
+    oLat=pos.coords.latitude;
+    oLng=pos.coords.longitude;
+    oName='현위치';
+    gpsCoords={lat:oLat,lng:oLng}; // 전역 갱신
+  }catch(e){
+    // GPS 실패 시 기존 캐시 또는 향남읍
+    if(gpsCoords){
+      oLat=gpsCoords.lat;oLng=gpsCoords.lng;oName='현위치';
+    } else {
+      oLat=ORIGIN_FIXED_COORDS.lat;oLng=ORIGIN_FIXED_COORDS.lng;oName=ORIGIN_FIXED_NAME;
+      showToast('⚠️ GPS 수신 실패 — 향남읍 기준으로 경로 안내합니다');
+    }
+  }
+  let p=[`startname=${encodeURIComponent(oName)}`,`startx=${oLng}`,`starty=${oLat}`,`goalname=${encodeURIComponent(name)}`];
+  if(lat&&lng){p.push(`goalx=${lng}`);p.push(`goaly=${lat}`);}else p.push(`goal=${encodeURIComponent(addr)}`);
+  p.push('reqCoordType=WGS84GEO&resCoordType=WGS84GEO&fullscreen=1');
+  launchTmap(`tmap://route?${p.join('&')}`);
+  // 티맵 미설치 시 플레이스토어 안내 (앱 화면 유지)
+}
+
+// ===================== SETTINGS ACTIONS =====================
+function editApiUrl(){
+  const cur=localStorage.getItem('apps_script_url')||'';
+  const v=prompt('앱스스크립트 URL을 입력하세요:',cur);
+  if(v!==null){localStorage.setItem('apps_script_url',v.trim());renderSettings();showToast('✅ URL 저장됨');}
+}
+function editAppTitle(){
+  const cur=localStorage.getItem('app_title')||'한국건설안전공사 현장관리 - 당진시';
+  const v=prompt('앱 제목을 입력하세요:',cur);
+  if(v!==null){localStorage.setItem('app_title',v.trim());renderHeader();renderSettings();showToast('✅ 제목 저장됨');}
+}
+function editOfficerInfo(){
+  const curName=localStorage.getItem('officer_name')||'';
+  const curPhone=localStorage.getItem('officer_phone')||'';
+  const vName=prompt('담당자 이름을 입력하세요:',curName);
+  if(vName===null)return;
+  const vPhone=prompt('핸드폰 번호를 입력하세요:',curPhone);
+  if(vPhone===null)return;
+  localStorage.setItem('officer_name',vName.trim());
+  localStorage.setItem('officer_phone',vPhone.trim());
+  renderHeader();renderSettings();showToast('✅ 담당자 정보 저장됨');
+}
+function renderHeader(){
+  const title=localStorage.getItem('app_title')||'한국건설안전공사 현장관리 - 당진시';
+  const name=localStorage.getItem('officer_name')||'';
+  const phone=localStorage.getItem('officer_phone')||'';
+  // 제목 → 앞부분만 헤더에 표시 (짧게)
+  const parts=title.split('-');
+  const short=parts[parts.length-1].trim()||title;
+  const titleEl=document.getElementById('header-title-text');
+  if(titleEl)titleEl.innerHTML=`🏠 <span>${esc(short)}</span>`;
+  document.title=title;
+  const officerEl=document.getElementById('header-officer');
+  if(officerEl)officerEl.textContent=(name||phone)?[name,phone].filter(Boolean).join(' · '):'';
+}
+function editKakaoKey(){
+  const cur=localStorage.getItem('kakao_api_key')||'';
+  const v=prompt('카카오 JavaScript 키를 입력하세요.\n\ndevelopers.kakao.com → 앱 → 플랫폼 키 → JavaScript 키',cur);
+  if(v!==null){localStorage.setItem('kakao_api_key',v.trim());renderSettings();showToast(v.trim()?'✅ 카카오 키 저장됨':'🗑️ 카카오 키 삭제됨');}
+}
+async function resetCompleted(){
+  if(!confirm('모든 현장의 상태를 초기화하시겠습니까?'))return;
+  await dbClear('status');siteStatus.clear();renderAll();showToast('↩️ 상태 전체 초기화');
+}
+async function confirmClearCache(){
+  if(!confirm('캐시를 삭제하고 새로 불러오시겠습니까?'))return;
+  await dbClear('cache');allSites=[];await loadData(true);
+}
+
+// ===================== 비밀번호 잠금 =====================
+// 인증 헬퍼 — 단순화 (토큰 없음)
+function getToken(){return '';}
+function setToken(pw){}
+function authGet(url, params=''){
+  return fetch(`${url}${params}`);
+}
+function authPost(url, body){
+  return fetch(url,{method:'POST',redirect:'follow',
+    headers:{'Content-Type':'text/plain'},
+    body:JSON.stringify(body)});
+}
+function showLockIfNeeded(){
+  if(!isAuthenticated()){
+    document.getElementById('lock-screen').style.display='flex';
+    setTimeout(()=>document.getElementById('lock-input').focus(),100);
+  } else {
+    document.getElementById('lock-screen').style.display='none';
+  }
+}
+function isAuthenticated(){
+  const t=parseInt(localStorage.getItem('auth_ok')||'0');
+  return t&&(Date.now()-t<24*60*60*1000);
+}
+async function checkPassword(){
+  const input=document.getElementById('lock-input').value.trim();
+  if(!input)return;
+  const btn=document.querySelector('#lock-screen button');
+  const errEl=document.getElementById('lock-error');
+  btn.textContent='확인 중...';btn.disabled=true;
+  const url=localStorage.getItem('apps_script_url');
+  if(!url){
+    document.getElementById('lock-screen').style.display='none';
+    document.getElementById('setup-screen').classList.remove('hidden');
+    btn.textContent='입력';btn.disabled=false;
+    return;
+  }
+  try{
+    const res=await fetch(`${url}?action=checkPassword&pw=${encodeURIComponent(input)}`,{redirect:'follow'});
+    const text=await res.text();
+    // ok:true 문자열이 포함되어 있으면 성공
+    if(text.indexOf('"ok":true')!==-1 || text.indexOf('"ok": true')!==-1){
+      setToken(input);
+      localStorage.setItem('auth_ok',Date.now().toString());
+      localStorage.setItem('local_pw',input);
+      document.getElementById('lock-screen').style.display='none';
+      document.getElementById('lock-input').value='';
+      errEl.textContent='';
+      init();
+      return;
+    }
+    errEl.textContent='응답: '+text.substring(0,80);
+    document.getElementById('lock-input').value='';
+    document.getElementById('lock-input').focus();
+  }catch(e){
+    errEl.textContent='연결 오류: '+e.message;
+  }
+  btn.textContent='입력';btn.disabled=false;
+}
+async function changePassword(){
+  const url=localStorage.getItem('apps_script_url');
+  if(!url){alert('앱스스크립트 URL이 설정되지 않았습니다.');return;}
+  const cur=prompt('현재 비밀번호를 입력하세요:');
+  if(cur===null)return;
+  const newPw=prompt('새 비밀번호 (8자 이상):');
+  if(!newPw||newPw.length<8){alert('8자 이상 입력해주세요.');return;}
+  const confirm2=prompt('새 비밀번호 확인:');
+  if(newPw!==confirm2){alert('비밀번호가 일치하지 않습니다.');return;}
+  try{
+    const res=await fetch(url,{method:'POST',redirect:'follow',
+      headers:{'Content-Type':'text/plain'},
+      body:JSON.stringify({action:'changePassword',current:cur,newPw})});
+    const data=await res.json();
+    if(data.error){alert('❌ '+data.error);return;}
+    localStorage.removeItem('auth_ok');
+    alert('✅ 비밀번호가 변경됐습니다.\n모든 기기에 적용됩니다.\n다시 로그인해주세요.');
+    location.reload();
+  }catch(e){alert('서버 오류: '+e.message);}
+}
+function logout(){
+  if(!confirm('로그아웃 하시겠습니까?'))return;
+  localStorage.removeItem('auth_ok');
+  location.reload();
+}
+function saveSetup(){
+  const url=document.getElementById('setup-url').value.trim();
+  if(!url){alert('URL을 입력해주세요.');return;}
+  if(!url.startsWith('https://')){alert('URL이 https://로 시작해야 합니다.\n배포 URL을 다시 확인해주세요.');return;}
+  localStorage.setItem('apps_script_url',url);
+  document.getElementById('setup-screen').classList.add('hidden');
+  loadData(true);
+}
+function skipSetup(){document.getElementById('setup-screen').classList.add('hidden');loadData();}
+
+// ===================== VIEW NAV =====================
+function showView(id){
+  ['rec','list','nearby','tech','notice','map','settings'].forEach(v=>document.getElementById('view-'+v)?.classList.remove('active'));
+  document.getElementById('view-'+id)?.classList.add('active');
+  ['rec','list','nearby','tech','notice','map','settings'].forEach(n=>document.getElementById('nav-'+n)?.classList.remove('active'));
+  document.getElementById('nav-'+id)?.classList.add('active');
+  if(id==='settings')renderSettings();
+  if(id==='list'){renderRegionGrid('list-region-grid',listRegion,'setListRegion');renderList();}
+  if(id==='nearby')initNearbySearch();
+  if(id==='tech')initTech();
+  if(id==='notice'){noticeInited=false;initNotice();}
+  if(id==='map')initSiteMap();
+  // 마지막 탭 저장
+  localStorage.setItem('last_view',id);
+}
+
+// ===================== 주변 현장 검색 =====================
+let nearbyKm=1;
+let nearbyGps=null;
+let nearbyTypes=new Set(['hyunjang','chakgong','sanJae']);
+let nearbyStatuses=new Set(['미확인','확인불가','공사전','공사중','추가지원']);
+
+function setNearbyKm(km){
+  nearbyKm=km;
+  [1,2,3,5,10].forEach(k=>document.getElementById('nkm-'+k)?.classList.toggle('active',k===km));
+  renderNearby();
+}
+
+function nearbyToggleAll(){
+  const all=ALL_TYPES.every(t=>nearbyTypes.has(t));
+  if(all)nearbyTypes.clear();else ALL_TYPES.forEach(t=>nearbyTypes.add(t));
+  syncNearbyTypeUI();renderNearby();
+}
+function nearbyToggleStatus(st){
+  if(nearbyStatuses.has(st))nearbyStatuses.delete(st);else nearbyStatuses.add(st);
+  const map={'미확인':'nst-u','확인불가':'nst-uc','공사전':'nst-0','공사중':'nst-1','추가지원':'nst-4','공사완료':'nst-2','지원완료':'nst-3'};
+  Object.entries(map).forEach(([s,id])=>{
+    document.getElementById(id)?.classList.toggle('active',nearbyStatuses.has(s));
+  });
+  renderNearby();
+}
+function nearbyToggleType(t){
+  if(nearbyTypes.has(t))nearbyTypes.delete(t);else nearbyTypes.add(t);
+  syncNearbyTypeUI();renderNearby();
+}
+function syncNearbyTypeUI(){
+  const all=ALL_TYPES.every(t=>nearbyTypes.has(t));
+  document.getElementById('nft-all')?.classList.toggle('active',all);
+  [['nft-hj','hyunjang'],['nft-ck','chakgong'],['nft-sj','sanJae']].forEach(([id,type])=>{
+    document.getElementById(id)?.classList.toggle('active',nearbyTypes.has(type));
+  });
+}
+
+// 두 좌표 간 직선거리 계산 (km, Haversine)
+function calcDist(lat1,lng1,lat2,lng2){
+  const R=6371,dLat=(lat2-lat1)*Math.PI/180,dLng=(lng2-lng1)*Math.PI/180;
+  const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+
+function initNearbySearch(){
+  const textEl=document.getElementById('nearby-gps-text');
+  textEl.textContent='📡 GPS 수신 중...';
+  document.getElementById('nearby-cards').innerHTML='<div class="loading"><div class="spinner"></div><div>현위치 확인 중...</div></div>';
+  if(!navigator.geolocation){
+    textEl.textContent='⚠️ GPS 미지원 기기';
+    document.getElementById('nearby-cards').innerHTML='<div class="empty"><p>이 기기는 GPS를 지원하지 않습니다.</p></div>';
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(
+    pos=>{
+      nearbyGps={lat:pos.coords.latitude,lng:pos.coords.longitude};
+      textEl.textContent=`📡 현위치 확인됨`;
+      renderNearby();
+    },
+    err=>{
+      textEl.textContent='⚠️ GPS 권한을 허용해주세요 (재시도 버튼 클릭)';
+      document.getElementById('nearby-cards').innerHTML='<div class="empty"><p>GPS 권한이 필요합니다.<br>브라우저에서 위치 권한을 허용한 후<br>재시도 버튼을 눌러주세요.</p></div>';
+    },
+    {enableHighAccuracy:true,timeout:12000,maximumAge:30000}
+  );
+}
+
+function renderNearby(){
+  if(!nearbyGps){
+    document.getElementById('nearby-cards').innerHTML='<div class="empty"><p>GPS 수신 대기 중...<br>권한을 허용하거나 재시도를 눌러주세요.</p></div>';
+    return;
+  }
+  const filtered=allSites
+    .filter(s=>nearbyTypes.has(s.type))
+    .filter(s=>{
+      const isSupDone=['1회지원','2회지원','3회지원'].includes(getSupStatus(s.id));
+      const isExtra=isScheduled(s.id);
+      if(isSupDone) return nearbyStatuses.has('지원완료');
+      if(isExtra) return nearbyStatuses.has('추가지원');
+      return nearbyStatuses.has(getSiteStatus(s.id));
+    })
+    .map(s=>{
+      if(!s.lat||!s.lng)return null;
+      const dist=calcDist(nearbyGps.lat,nearbyGps.lng,s.lat,s.lng);
+      return dist<=nearbyKm?{...s,_dist:dist}:null;
+    })
+    .filter(Boolean)
+    .sort((a,b)=>a._dist-b._dist);
+
+  document.getElementById('nearby-count').textContent=filtered.length;
+  const c=document.getElementById('nearby-cards');
+  if(!filtered.length){
+    c.innerHTML=`<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/></svg><p>반경 ${nearbyKm}km 내 현장이 없습니다.<br>반경을 넓혀보세요.</p></div>`;
+    return;
+  }
+  c.innerHTML=filtered.map(s=>{
+    const distTxt=s._dist<1?`${Math.round(s._dist*1000)}m`:`${s._dist.toFixed(1)}km`;
+    const card=siteCardHTML(s,true);
+    return card.replace(
+      `<span class="badge b-gray">${esc(s.region)}</span>`,
+      `<span class="badge b-gray">${esc(s.region)}</span><span class="badge" style="background:var(--gdim);color:var(--green);font-size:12px;font-weight:700;padding:3px 10px;border-radius:20px">📍 ${distTxt}</span>`
+    );
+  }).join('');
+}
+
+// ===================== 기술지원 참고자료 =====================
+const TECH_DATA = {"공통작업":{"개인보호구":[{"위험요인":"개인보호구 미착용시 재해위험","개선대책":"작업중 안전모 등 현장에 적합한 개인보호구 상시 착용 및 안전모 턱끈 체결 등"}],"TBM":[{"위험요인":"TBM 미실시시 재해위험","개선대책":"작업시작전 10분 안전회의 실시, 위험요소 사전점검 및 개선방향 논의 등"}],"미세먼지":[{"위험요인":"미세먼지로 인한 건강장해 위험","개선대책":"대기오염정보 수시확인 및 옥외작업자 방진마스크 등 보호구 착용"}],"온열질환":[{"위험요인":"폭염으로 인한 온열질환 등 건강장해 위험","개선대책":"한낮을 피해 작업시간 조정 및 그늘에서 자주 휴식 취하기, 충분한 물 섭취 등"}],"화재예방":[{"위험요인":"화재위험작업으로 인한 화재 위험","개선대책":"화기사용작업 및 장소 불티비산방지조치, 화재감시자 배치 및 피난경로 확보 등"}]},"고위험기인물":{"굴착기":[{"위험요인":"굴착기 작업 중 충돌 등 재해위험","개선대책":"굴착기 안전장치 점검 및 유도자 배치, 작업반경 내 접근금지 등"},{"위험요인":"굴착기 연약지반 이동 중 전도 등 재해위험","개선대책":"이동경로 사전점검 및 안전통로 확보, 운전자 안전모 착용 및 안전벨트 체결 등"},{"위험요인":"굴착기 자재 인양 설치 작업 중 낙하물 등 재해위험","개선대책":"굴착기 안전장치 점검 및 훅해지장치 등 인양장비 점검, 작업지휘자 배치 및 임의 접금 통제 등"},{"위험요인":"굴착기 사면 굴착 작업 중 근로자 추락 위험","개선대책":"사면 굴착 작업 중 작업지휘자 배치, 임의 접근 통제 등"},{"위험요인":"굴착기 작업 중 무너짐 위험","개선대책":"작업전 지반상태 확인, 굴착면 기울기 1:1.2 규정 준수, 굴착부 상단면 토사 적치 금지 등"},{"위험요인":"굴착기 작업 중 굴착 단부 붕괴로 근로자 매몰 사고 위험","개선대책":"작업 전 지반 상태 확인 후 장비 사용, 굴착면 기울기 1:1.2 규정 준수(미충족 시 간이 흙막이 시설 설치), 굴착부 상단면 토사 적치 금지 등"},{"위험요인":"굴착 시 지하매설물 훼손 위험","개선대책":"유관 기관과 사전 지하매설물 조사 철저"},{"위험요인":"굴착작업으로 인한 교통사고 위험","개선대책":"차량통행이 많은 장소에서 작업 시 교통신호수 배치, 시인성이 뛰어난 형광색 조끼와 안전모 착용 등"},{"위험요인":"폭이 좁은 하천에서 두 대의 굴착기 충돌 등 위험","개선대책":"굴착기 간의 거리를 충분히 둘 것"}],"이동식크레인":[{"위험요인":"이동식크레인 작업 중 낙하물에 의한 맞음 등 재해위험","개선대책":"권과방지장치, 훅해지장치 등 안전장치 점검, 작업자 위로 인양금지"},{"위험요인":"이동식크레인 작업 중 지반침하시 전도 등 재해위험","개선대책":"아웃트리거 최대 인출, 지면 수평 유지 등"},{"위험요인":"이동식크레인 인양 중 전선 부근 작업으로 감전 등 재해위험","개선대책":"절연보호구 등 안전보호구 착용, 작업반경 내 접근통제 등"},{"위험요인":"이동식크레인 사용 작업 중 낙하물에 의한 맞음 위험","개선대책":"작업구역내 사람 접근 금지 조치, 공사표지판 및 안전띠, 라바콘 등 설치"}],"고소작업대(차)":[{"위험요인":"고소작업대(차) 사용 작업 중 추락 등 재해위험","개선대책":"고소작업대 안전장치 점검, 작업대 4면 안전난간 설치, 상승상태에서 이동금지 등"},{"위험요인":"경사지에서 작업 중 추락, 전도 등 재해위험","개선대책":"작업대 지면과 4방향 수평 유지 및 아웃트리가 최대 인출, 신체를 난간에 기대거나 작업대를 벗어나서 작업 금지 등"},{"위험요인":"고압선 작업중 감전사고 위험","개선대책":"작업자 절연장갑 등 절연보호구 착용, 작업자 안전대 체결, 작업반경내 접근 통제 등"},{"위험요인":"차도 점유 작업중 교통사고 위험","개선대책":"작업구간 안전라인설치, 신호수 배치 등 안전조치 등"}],"고소작업대":[{"위험요인":"고소작업대 사용 작업 중 추락 등 재해위험","개선대책":"과상승 방지장치 등 안전장치 점검, 상승 상태에서 이동 금지 및 현장 이동통로 지면상태 점검 등"}],"이동식비계":[{"위험요인":"이동식비계 사용 작업 중 추락, 전도 등 재해위험","개선대책":"상부 안전난간대 설치 및 작업발판 견고하게 설치, 바퀴고정장치 및 아웃트리거 등 안전장치 점검"}]},"기인물":{"시스템비계":[{"위험요인":"시스템비계에서 작업 중 떨어짐 위험","개선대책":"동시간대 수직선상에서 작업 금지, 추랑방호망 설치, 침하방지 깔판 또는 깔목 설치 등"},{"위험요인":"시스템 비계 철거 작업 시 붕괴, 낙하물 위험","개선대책":"작업계획서에 의한 작업지휘자 배치, 작업 구역내 사람 접근 금지, 작업 순서에 따라 안전 작업 등"}],"A형사다리":[{"위험요인":"A형 사다리 단독작업 시 추락 등 재해위험","개선대책":"2인1조 작업, 아웃트리거 등 안전장치 설치, 최상단 발판 작업금지, 사다리 무게중심을 벗어나 작업 금지 등"}],"일자형사다리":[{"위험요인":"일자형 사다리 사용 작업 중 떨어짐 등 재해위험","개선대책":"일자형 사다리 작업용으로 사용 금지(승강용으로만 사용), 상부여장 길이 60cm 이상 확보, 설치각도 75도 이내, 구조물과 사다리 접점부 결속 등"}],"말비계":[{"위험요인":"말비계 사용중 넘어짐, 떨어짐 등 부상 위험","개선대책":"작업발판 양끝단서 작업금지, 작업발판 폭 40cm이상, 전도방지용 벌어짐방지 와이어 설치 등"}],"핸드믹서기":[{"위험요인":"핸드믹서기 사용 시 감전 및 근골격계질환 등 위험","개선대책":"전원부 및 전선피복 절연 상태 확인, 누전차단기 작동 확인, 방진장갑 착용 및 헐렁한 복장 착용 금지 등"}],"핸드그라인더":[{"위험요인":"핸드그라인더 작업 중 베임 등 재해위험","개선대책":"보호덮개 설치 등 안전장치 점검, 보안경 및 방진마스크 등 보호구 착용"},{"위험요인":"핸드그라인더 사용 작업 중 파편, 분진 등으로 인한 건강장해 위험","개선대책":"보호덮개 설치 등 안전장치 점검, 보안경 및 방진마스크 등 보호구 착용"}],"회전체절단기":[{"위험요인":"회전체절단기 사용중 자재에 맞음, 베임 등 부상 위험","개선대책":"보호덮개 등 안전장치 설치 및 제거금지, 안전모, 보안경, 방진마스크 등 보호구 착용"}],"핸드브레이커":[{"위험요인":"파편에 의한 사고 위험","개선대책":"작업방향은 하향 연직 유지, 보안경, 방진마스크, 방진장갑 착용, 장시간 연속 작업 금지 등"}]},"위험작업":{"트럭운반작업":[{"위험요인":"작업트럭 현장 진출입 시 차량 및 보행자와 사고 위험","개선대책":"신호수 및 공사안내표지판, 라바콘 배치, 신호수 배치, 후진경보장치 작동 확인, 진출입구간 서행 통행 및 작업자외 출입 통제 등"}],"낙하물위험작업":[{"위험요인":"공도구 낙하 등 보행자 안전사고 위험","개선대책":"고소작업에 필요한 최소한의 공도구만 적재, 작업구간 하부에 진입통제구역 설정 등"}],"전기작업":[{"위험요인":"전기작업 시 감전 등 위험","개선대책":"누전차단기 작동 점검, 연결선 및 전기기구 배선 피복 점검, 절연용 보호구 착용 등"}],"도로변작업":[{"위험요인":"작업트럭 현장 진출입 시 차량 및 보행자와 사고 위험","개선대책":"신호수 및 공사안내표지판, 라바콘 설치 등으로 작업구역내 접근통제, 후진경보장치 등 안전장치 작동 확인 등"}],"도로보수작업":[{"위험요인":"도로 곡선 구간 작업 중 교통사고 위험","개선대책":"유도자 양방향 배치, 무전연락 신호체게 확립 후 교행 안내 등"}],"도로컷팅작업":[{"위험요인":"경사면 하향으로 도로컷팅 작업 시 하천으로 떨어짐 안전사고 위험","개선대책":"도로 컷팅 시 하부에서부터 상향으로 작업 진행, 동력 전달장치 보호덮개 설치, 하천변 단부 추락예방 방호벽 설치 등"}],"바닥개구부작업":[{"위험요인":"바닥 철판 노후화로 생긴 개구부에 발빠짐, 떨어짐 위험","개선대책":"철판 등 견고한 재로로 개구부 덮개 설치, 철판 제거된 장소 접근금지 안전라인 설치 등"},{"위험요인":"2층 바닥 철 구조물에서 작업 중 떨어짐 위험","개선대책":"안전난간 또는 개구부 덮개 설치, 안전대 부착 설비 설치 후 안전대 착용 등"}],"지붕작업":[{"위험요인":"지붕작업 시 떨어짐 위험","개선대책":"안전모 착용(턱끈체결) 및 안전대 부착설비에 안전대 체결, 30cm 이상 작업발판 설치 등"},{"위험요인":"채광창 파손 시 작업 중 떨어짐 위험","개선대책":"30cm 이상의 작업통로용 발판 설치, 지붕 가장자리 안전난간 설치, 고소작업차를 이용하여 안전하게 작업 권고 등"}],"샌딩작업":[{"위험요인":"샌딩작업 중 분진에 의한 호흡기 질환 위험","개선대책":"방진마스크 등 보호구 착용, 집진기 설치 및 환기조치 등"}],"밀폐공간":[{"위험요인":"밀폐공간 작업 중 중독, 질식 등 위험","개선대책":"작업전, 작업중 유해가스 농도 측정 및 지속적인 환기 실시, 감시인 배치 및 송기마스크 등 호흡용보호구 착용 등"}],"철거작업":[{"위험요인":"철거 폐기물 반출 시 창문밖(단부) 사다리차 이용하여 작업간 떨어짐 위험","개선대책":"작업자 안전모, 안전대 착용, 안전고리 체결 고정점 설치, 관리감독자 상주하여 관리감독"},{"위험요인":"공사먼지 노출에 의한 작업자 건강장해 발생(호흡기 질환)","개선대책":"상시 물뿌리기, 방진마스크 착용, 보호안경 착용"},{"위험요인":"해체 중인 구조물의 붕괴, 넘어짐으로 인한 깔림 위험","개선대책":"해체 중인 구조물에 견고한 지지대 설치, 붕괴 우려가 있는 위험지역 출입금지 지정 및 근로자 접근 통제 등"}],"유해화학물질작업":[{"위험요인":"유해화학물질 사용시 건강장해 위험","개선대책":"화학물질 사용시 MSDS 사전 숙지, MSDS에서 제시한 노출시간 준수, 개인보호구 착용 등"},{"위험요인":"위험물 사용시 화재 등 안전 위험","개선대책":"금연, 화기 금지 및 소화기 비치, 유류 별도 보관 등"},{"위험요인":"고체연료 사용 시 산불 위험","개선대책":"외부 작업 시 바람있을 때 작업 금지, 사용 중 불 옆에 작업자 항시 대기 등"},{"위험요인":"신나 등 위험물 사용시 안전 위험","개선대책":"희석제류(신나 등) 별도 보관 사용, 소화기 비치 등"}],"바닥작업":[{"위험요인":"바닥 작업선 걸림에 의한 이동중 넘어짐 위험","개선대책":"작업선을 충분한 여유 길이를 확보 후 주통로를 피하여 거치 등"},{"위험요인":"바닥보양재(타포린, 부직포) 미끄럼 사고 위험","개선대책":"미끄러지지 않도록 테이핑 후 밀착보양 등"}],"와이어매쉬 포설":[{"위험요인":"와이어메쉬 운반 포설 시 찔림, 긁힘 위험","개선대책":"개인보호구 착용, 동료 근로자 위치 확인 철저 등"}],"옥탑 및 옥상작업":[{"위험요인":"옥탑 및 옥상 난간 낮은 곳 작업 중 추락 위험","개선대책":"옥상 조형물 기둥에 안전대 걸이 설비 설치 후 안전대 착용 등"},{"위험요인":"외부도장 작업 시 떨어짐 위험","개선대책":"안전모 착용 수직구명줄에 체결, 2개소 이상 지지물에 적정길이의 로프 결속, 작업지휘자 배치, 작업장소 하부 출입금지 조치 등"}],"용접작업":[{"위험요인":"용접불티에 의한 실명 등 재해위험","개선대책":"작업자 용접면 등 보호구 착용 및 소화기 비치 등"}],"계단운반작업":[{"위험요인":"계단으로 폐기물 운반 시 넘어짐 및 근골격계질환 위험","개선대책":"중량물은 소분하여 운반 또는 이동대차 이용 운반, 계단 장애물 제거, 작업자 시야 확보 등"}],"조적쌓기작업":[{"위험요인":"조적 하루쌓기 높이 위반 시 무너짐 위험","개선대책":"조적 하루쌓기 높이 1.2m(최대 1.5m) 준수"},{"위험요인":"시멘트 작업 시 독성에 의한 피부 질환 등 위험","개선대책":"작업중에는 안전장갑, 보안경 등 개인보호구 착용 철저"}]}};
+
+let techCategory='공통작업';
+let techItem='';
+let techSelected=[];
+
+function initTech(){
+  if(!techSelected)techSelected=[];
+  renderTechCategoryTabs();
+  renderTechItemTabs();
+  renderTechChecklist();
+  updateTechActionBar();
+}
+
+function renderTechCategoryTabs(){
+  const cats=Object.keys(TECH_DATA);
+  const colors={'공통작업':'var(--green)','고위험기인물':'#ef4444','기인물':'var(--blue)','위험작업':'var(--primary)'};
+  document.getElementById('tech-category-tabs').innerHTML=cats.map(c=>`
+    <button onclick="setTechCategory('${c}')" style="height:40px;padding:0 14px;border-radius:10px;border:2px solid ${colors[c]||'var(--border)'};background:${techCategory===c?(colors[c]):'transparent'};color:${techCategory===c?'#fff':(colors[c]||'var(--text2)')};font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;transition:all .15s">${c}</button>`).join('');
+}
+function setTechCategory(cat){techCategory=cat;techItem='';renderTechCategoryTabs();renderTechItemTabs();renderTechChecklist();}
+function renderTechItemTabs(){
+  const items=Object.keys(TECH_DATA[techCategory]||{}).sort((a,b)=>a.localeCompare(b,'ko'));
+  document.getElementById('tech-item-tabs').innerHTML=items.map(it=>`
+    <button onclick="setTechItem('${it.replace(/'/g,"\\'")}')" style="height:36px;padding:0 12px;border-radius:8px;border:1.5px solid var(--border);background:${techItem===it?'var(--blue)':'var(--bg3)'};color:${techItem===it?'#fff':'var(--text2)'};font-size:13px;font-weight:600;cursor:pointer;font-family:'Noto Sans KR',sans-serif;white-space:nowrap;transition:all .15s">${it}</button>`).join('');
+}
+function setTechItem(item){techItem=item;renderTechItemTabs();renderTechChecklist();}
+function renderTechChecklist(){
+  const cl=document.getElementById('tech-checklist');
+  if(!techItem){cl.innerHTML='<div style="text-align:center;padding:32px 0;color:var(--text3);font-size:18px">위에서 기인물을 선택해주세요</div>';return;}
+  const items=TECH_DATA[techCategory]?.[techItem]||[];
+  const selKeys=new Set(techSelected.map(s=>s.기인물+'||'+s.위험요인));
+  const catColors={'공통작업':'var(--green)','고위험기인물':'#ef4444','기인물':'var(--blue)','위험작업':'var(--primary)'};
+  const catColor=catColors[techCategory]||'var(--primary)';
+  cl.innerHTML=`<div style="font-size:17px;font-weight:700;color:var(--blue);padding:14px 0 12px">📋 ${techCategory} — ${techItem} (${items.length}개)</div>`+
+    items.map(it=>{
+      const key=techItem+'||'+it.위험요인;
+      const chk=selKeys.has(key);
+      return`<div onclick="toggleTechItem('${techItem.replace(/'/g,"\\'")}','${it.위험요인.replace(/'/g,"\\'")}','${it.개선대책.replace(/'/g,"\\'")}')"
+        style="padding:20px;margin-bottom:14px;border-radius:14px;border:2px solid ${chk?catColor:'var(--border)'};background:${chk?'rgba(0,0,0,0.15)':'var(--bg2)'};cursor:pointer;transition:all .15s">
+        <div style="display:flex;align-items:flex-start;gap:14px">
+          <div style="width:32px;height:32px;border-radius:50%;border:2.5px solid ${chk?catColor:'var(--border)'};background:${chk?catColor:'transparent'};flex-shrink:0;display:flex;align-items:center;justify-content:center;margin-top:2px">
+            ${chk?'<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>':''}
+          </div>
+          <div style="flex:1">
+            <div style="font-size:18px;font-weight:700;color:${chk?catColor:'var(--text)'};margin-bottom:8px;line-height:1.4">⚠️ ${esc(it.위험요인)}</div>
+            <div style="font-size:16px;color:var(--text2);line-height:1.7">💡 ${esc(it.개선대책)}</div>
+          </div>
+        </div></div>`;}).join('');
+}
+function toggleTechItem(기인물,위험요인,개선대책){
+  const idx=techSelected.findIndex(s=>s.기인물===기인물&&s.위험요인===위험요인);
+  if(idx>=0)techSelected.splice(idx,1);
+  else techSelected.push({구분:techCategory,기인물,위험요인,개선대책});
+  renderTechChecklist();updateTechActionBar();
+}
+function updateTechActionBar(){
+  document.getElementById('tech-action-bar').style.display=techSelected.length?'block':'none';
+}
+function clearTechSelection(){techSelected=[];renderTechChecklist();updateTechActionBar();}
+function showTechResult(){
+  if(!techSelected.length)return;
+  const catColors={'공통작업':'var(--green)','고위험기인물':'#ef4444','기인물':'var(--blue)','위험작업':'var(--primary)'};
+  document.getElementById('tech-result-content').innerHTML=techSelected.map((s,i)=>{
+    const col=catColors[s.구분]||'var(--primary)';
+    return`<div style="margin-bottom:18px;padding:20px;background:var(--bg2);border-radius:14px;border-left:6px solid ${col}">
+      <div style="font-size:15px;color:var(--text3);font-weight:600;margin-bottom:8px">${i+1}. ${s.구분} — ${s.기인물}</div>
+      <div style="font-size:18px;font-weight:800;color:${col};margin-bottom:12px;line-height:1.4">⚠️ ${esc(s.위험요인)}</div>
+      <div style="font-size:16px;color:var(--text);line-height:1.7">💡 ${esc(s.개선대책)}</div>
+    </div>`;}).join('');
+  document.getElementById('tech-result-modal')._copyText=techSelected.map((s,i)=>`${i+1}. [${s.기인물}] ${s.위험요인}\n   → ${s.개선대책}`).join('\n\n');
+  document.getElementById('tech-result-modal').classList.add('open');
+}
+function copyTechResult(){
+  const text=document.getElementById('tech-result-modal')._copyText||'';
+  navigator.clipboard.writeText(text).then(()=>showToast('✅ 복사 완료!')).catch(()=>{
+    const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);showToast('✅ 복사 완료!');
+  });
+}
+
+// 티맵 실행 — iframe 방식으로 앱 화면 유지
+function launchTmap(url){
+  // 기존 iframe 제거
+  const old=document.getElementById('tmap-launcher');
+  if(old)old.remove();
+  const iframe=document.createElement('iframe');
+  iframe.id='tmap-launcher';
+  iframe.style.cssText='position:fixed;top:-1px;left:-1px;width:1px;height:1px;border:none;opacity:0';
+  iframe.src=url;
+  document.body.appendChild(iframe);
+  // 3초 후 제거
+  setTimeout(()=>{const el=document.getElementById('tmap-launcher');if(el)el.remove();},3000);
+}
+
+// ===================== 유의사항 =====================
+const NOTICE_DATA = {
+  '공통': [
+    '공공시설물의 경우 시설물 관리 조직 구성원이 감독관이라면 K2B에 기타관계자(감독관)으로 하고 직책 기입',
+    '동일한 주소에 사업개시번호가 다른 경우 지원 가능(단, 다른 사람의 서명을 받아야 함)',
+    '마을의 단독정자 및 파고라는 근생시설로 볼 수 없어 지원 불가 (단, 부속시설인 경우 지원 가능, 전경사진에 본 건물)',
+    '보고서의 작업내용에 기인물을 기록하지 말고 작업 내용을 구체적으로 기재할 것',
+    '보호구 착용이 양호한 경우 안전모 착용상태 양호, 지속적으로 안전모 등 보호구 착용 확인 요망 으로 기록',
+    '사진에 보이는 인원과 교육인원이 같아야 하고, 사진에 보이는 장비와 기인물에 대해 보고서에 기술해야 함',
+    '산재 미가입 1억 이상 공사에서 부분공사(관로, 지붕, 외부도장 등)만 추출하여 지원 불가',
+    '산재 미가입 현장으로 지원했는데 추후 산재가입이 확인되면 사무실로 통보',
+    '산재 미가입 현장은 시공업체가 다르더라도 중복 지원 불가',
+    '산재가입된 전기 소방 통신 가스 설비 등의 공사는 고위험 기인물 사용 현장만 지원 가능',
+    '신축공사는 지붕 위 작업만 지원 가능 (지붕 외는 고위험 기인물 있는 경우 지원 가능)하고 신축 인테리어는 불가',
+    '양호한 경우 현재 상태가 양호하고 지속적으로 확인을 요망한다는 내용으로 기록',
+    '작업 준비단계(10%↓) 및 작업 마무리(청소)단계(85%↑) 기술 지원 불가(작업자재+기인물 or 공도구 기술 지원 가능)',
+    '현장에 작업 자재와 기인물 또는 공도구가 있는 경우 지원 가능',
+  ],
+  '간판공사': [
+    '건설업으로 산재 가입한 경우 지원 가능',
+    '산재미가입 현장은 건설공사라고 판단되는 간판 설치 및 교체 건에 대해 지원 가능',
+  ],
+  '관로공사': [
+    '관로설치, 터파기, 굴착, 되메우기, 자재운반 등 제반 공사 지원 가능',
+    '다만, 수도나 도시가스 관련 굴착공사는 굴착기로 지원 가능',
+    '단, 수도계량기 설치나 도시가스 공사는 지원 불가함',
+    '산재가입현장은 관로가 설치되어 있는 사진이 있으면 관로공사로 지원 가능',
+    '산재미가입현장은 관로를 설치하고 있는 사진이 있으면 관로공사로 지원가능',
+    '상하수, 농업용수 등 수처리 및 오폐수 처리용 단독 관로 설치 작업 지원 가능',
+  ],
+  '리모델링': [
+    '건축물을 대수선, 일부 증축 또는 개축하는 경우 지원 가능',
+    '바닥, 벽, 마감재 변경 등 단순 인테리어 공사는 지원 불가',
+  ],
+  '옥상방수': [
+    '달비계, 고소작업차, 이동식사다리 등을 사용해서 옥상 방수작업을 하는 경우 지원 가능',
+    '무릎높이 45cm 이상의 옥상 난간벽이 있는 경우 지원 불가',
+  ],
+  '외부도장': [
+    '건물 외벽 싸인지 부착, 간판지지대 설치(간판은 보이지 않게 촬영) 등도 고소작업차를 기인물로 지원 가능',
+    '균열보수, 홈메우기, 면정리작업 등 부대작업 및 외벽 청소를 하는 경우도 지원 가능',
+    '달비계, 고소작업대, 이동식사다리, 이동식비계 등을 사용해서 도장작업 시 지원 가능',
+    '현재 공정상 외부도장은 하고 있지 않지만 추후 외부도장 공사가 예상된다면 외부도장 잡고 3회까지 지원 가능',
+  ],
+  '인테리어': [
+    '기인물이 없는 바닥 공사, 에어컨 및 CCTV 등 단독 설비 공사는 지원 불가',
+    '단독 설비공사 지원 불가(단, 전체 공사에 포함되어 있는 경우 지원 가능)',
+    '이동식사다리, 비계 등 추락사고의 위험이 있는 작업 도구를 사용하는 경우만 지원가능',
+    '인테리어 공사에 간판이 포함된 경우 고소작업대를 활용한 간판 작업 지원 가능',
+  ],
+  '지붕개보수': [
+    '단, 철근 콘크리트 지붕은 지원 불가',
+    '지붕으로 자재 등을 운반하는 등 부대 작업중인 경우도 지원 가능',
+    '지원 당일 지붕 위 또는 골조 위에서 개보수, 설치, 해체 및 태양광 패널 설치 시 지원 가능',
+    '현재 공정상 지붕은 하고 있지 않지만 추후 지붕 공사가 예상된다면 지붕개보수로 잡고 3회까지 지원 가능',
+  ],
+  '철거·해체': [
+    '건축물, 구조물 전체 철거 또는 구조물의 기둥이나 보 등이 포함된 구조부 일부 철거시 지원가능',
+    '내장재 단순 철거 공사 및 천장 텍스(석면 포함 물질) 철거 해체는 지원 불가',
+    '산재 가입 현장에 공사명이 건물 전체 철거인 경우 철거로 지원 가능',
+    '작업 시작전 일부 폐기물만 있는 경우 지원 불가',
+  ],
+  '축사시설': [
+    '축사, 돈사, 축분장, 퇴비사, 곤충재배사, 지렁이재배사, 식물재배사, 버섯재배사, 비닐하우스, 양계장, 양어장 등 포함',
+  ],
+  '주택·근생시설': [
+    '5개층 이상 → 아파트',
+    '다세대 1층에 상가인 경우 건물전체는 주택, 건물내 세대 공사도 주택, 1층 상가는 근생',
+    '2층 건물에 1층이 상가인 경우 건물 전체는 근생, 2층은 주택, 1층은 근생',
+  ],
+  '지원 대상 아님': [
+    '단, 고위험 기인물이 있는 경우 지원 가능',
+    '자동차학원, 무도학원, 운전 정비 관련 직업훈련소',
+    '예식장, 경마장, 경륜장',
+    '체육관 및 운동장(관람석의 바닥면적 합계가 1000m2 이상)',
+    '전시장(박물관, 미술관, 과학관, 문화관, 체험관, 기념관, 산업전시장, 박람회장 등)',
+    '동물원, 식물원, 수족관',
+    '도매시장, 소매시장, 농수산물도매시장, 농수산물공판장과 그 안에 있는 근생시설',
+    '종합병원, 요양병원, 노인복지시설',
+    '학교, 유치원, 교육원, 연수원, 연구소, 대형도서관',
+    '청소년수련관, 유스호스텔, 야영장, 캠핑장, 단독정자(파고라)',
+    '관광숙박시설(관광호텔, 콘도미니엄 등), 터미널',
+    '주유소(세차시설 포함), 가스충전소, 주차장, 세차장, 폐차장, 검사장, 정비공장',
+    '하수처리시설, 고물상',
+    '교정시설, 갱생보호시설',
+    '군사시설, 방송국, 촬영소, 발전소',
+    '장례식장, 화장장, 봉안당',
+    '야외음악당, 야외극장, 어린이회관, 관망탑, 휴게소',
+    '공원 유원지 또는 관광지에 부수되는 시설',
+  ],
+};
+
+const NOTICE_ICONS = {
+  '공통':'📋','간판공사':'🏷️','관로공사':'🚰','리모델링':'🏚️','옥상방수':'💧',
+  '외부도장':'🎨','인테리어':'🛋️','지붕개보수':'🏠','철거·해체':'⚒️',
+  '축사시설':'🐄','주택·근생시설':'🏢','지원 대상 아님':'🚫',
+};
+
+let noticeInited=false;
+function initNotice(){
+  if(noticeInited)return;
+  noticeInited=true;
+  const body=document.getElementById('notice-body');
+  const cats=Object.keys(NOTICE_DATA);
+  body.innerHTML=cats.map(cat=>{
+    const icon=NOTICE_ICONS[cat]||'📌';
+    const isDanger=cat==='지원 대상 아님';
+    const items=NOTICE_DATA[cat];
+
+    // 각 항목 분류
+    const classify=item=>{
+      const isBad=item.includes('지원 불가')||item.includes('지원불가')||item.includes('불가함');
+      const isGood=item.includes('지원 가능')||item.includes('지원가능');
+      return isBad?'bad':isGood?'good':'neutral';
+    };
+
+    // 정렬: 초록(good) → 빨강(bad) → 회색(neutral)
+    const order={'good':0,'bad':1,'neutral':2};
+    const sorted=[...items].sort((a,b)=>order[classify(a)]-order[classify(b)]);
+
+    return`<div style="margin-bottom:12px;border-radius:12px;border:1px solid var(--border);overflow:hidden">
+      <div onclick="toggleNotice(this)" style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:var(--bg2);cursor:pointer">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:20px">${icon}</span>
+          <span style="font-size:15px;font-weight:700;color:${isDanger?'var(--red)':'var(--text)'}">${cat}</span>
+          <span style="font-size:12px;color:var(--text3);background:var(--bg3);padding:2px 8px;border-radius:10px">${items.length}개</span>
+        </div>
+        <span class="notice-arrow" style="font-size:14px;color:var(--text3);transition:transform .2s">▼</span>
+      </div>
+      <div class="notice-list" style="display:none;padding:8px 0">
+        ${sorted.map((item,i)=>{
+          const type=classify(item);
+          const color=type==='bad'?'var(--red)':type==='good'?'var(--green)':'var(--text2)';
+          const dot=type==='bad'?'🔴':type==='good'?'🟢':'▪️';
+          return`<div style="display:flex;align-items:flex-start;gap:10px;padding:10px 16px;${i>0?'border-top:1px solid var(--border)':''}">
+            <span style="font-size:12px;flex-shrink:0;margin-top:2px">${dot}</span>
+            <span style="font-size:14px;color:${color};line-height:1.6">${item}</span>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+function toggleNotice(header){
+  const list=header.nextElementSibling;
+  const arrow=header.querySelector('.notice-arrow');
+  const isOpen=list.style.display!=='none';
+  list.style.display=isOpen?'none':'block';
+  arrow.style.transform=isOpen?'':'rotate(180deg)';
+}
+
+// ===================== 현장 지도 =====================
+let siteMapInited=false;
+let siteMapObj=null;
+let siteMapLayers={};
+const MAP_LAYERS=[
+  {key:'scheduled', label:'방문예정', color:'#f97316'},
+  {key:'priority',  label:'중점관리', color:'#ca8a04'},
+  {key:'period',    label:'집중방문', color:'#16a34a'},
+  {key:'normal',    label:'일반공사', color:'#6b7280'},
+];
+
+function getSiteLayer(s){
+  if(isScheduled(s.id))return'scheduled';
+  if(isPriority(s.id))return'priority';
+  if(inPeriod(s.visitStart,s.visitEnd))return'period';
+  return'normal';
+}
+
+function initSiteMap(){
+  // 레이어 버튼 렌더링
+  const btnContainer=document.getElementById('map-layer-btns');
+  if(!btnContainer.dataset.ready){
+    btnContainer.dataset.ready='1';
+    // 활성 레이어 상태
+    const active={scheduled:true,priority:true,period:true,normal:true};
+    btnContainer.innerHTML=MAP_LAYERS.map(l=>{
+      const cnt=allSites.filter(s=>!isCompleted(s.id)&&getSiteLayer(s)===l.key&&s.lat&&s.lng).length;
+      return`<button id="maplayer-${l.key}" onclick="toggleMapLayer('${l.key}')"
+        style="display:flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;border:2px solid ${l.color};background:${l.color};color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif">
+        <span style="width:8px;height:8px;border-radius:50%;background:#fff;display:inline-block"></span>${l.label} ${cnt}
+      </button>`;
+    }).join('');
+  }
+
+  if(siteMapInited&&siteMapObj){siteMapObj.invalidateSize();return;}
+  siteMapInited=true;
+
+  // Leaflet 로드 확인 후 지도 초기화
+  function buildMap(){
+    const L=window.L;
+    siteMapObj=L.map('site-map',{zoomControl:true}).setView([36.89,126.63],12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+      attribution:'© OpenStreetMap',maxZoom:19
+    }).addTo(siteMapObj);
+
+    // 각 레이어별 마커 그룹
+    MAP_LAYERS.forEach(l=>{
+      const layerSites=allSites.filter(s=>!isCompleted(s.id)&&getSiteLayer(s)===l.key&&s.lat&&s.lng);
+      const markers=layerSites.map(s=>{
+        const marker=L.circleMarker([s.lat,s.lng],{
+          radius:7,fillColor:l.color,color:'#fff',weight:2,opacity:1,fillOpacity:0.9
+        });
+        marker.bindPopup(`
+          <b style="font-size:13px;display:block;margin-bottom:4px">${s.name}</b>
+          <span style="font-size:12px;color:#666;display:block;margin-bottom:8px">${s.address}</span>
+          <button onclick="openDetailFromMap('${s.id}')"
+            style="width:100%;height:34px;border:none;background:#f59e0b;color:#000;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif">
+            📋 상세 보기
+          </button>`);
+        return marker;
+      });
+      siteMapLayers[l.key]=L.featureGroup(markers).addTo(siteMapObj);
+    });
+
+    // 전체 마커 보이도록 줌 조정
+    const allMarkers=Object.values(siteMapLayers).reduce((acc,g)=>{acc.addLayer(g);return acc;},L.featureGroup());
+    if(allSites.filter(s=>s.lat&&s.lng).length>0){
+      try{siteMapObj.fitBounds(allMarkers.getBounds().pad(0.1));}catch(e){}
+    }
+
+    // 현재 위치 빨간 핀
+    if(navigator.geolocation){
+      navigator.geolocation.getCurrentPosition(pos=>{
+        const {latitude:lat,longitude:lng}=pos.coords;
+        const myIcon=L.divIcon({
+          html:`<div style="width:16px;height:16px;border-radius:50%;background:#ef4444;border:3px solid #fff;box-shadow:0 0 6px rgba(239,68,68,.8)"></div>`,
+          className:'',iconSize:[16,16],iconAnchor:[8,8]
+        });
+        L.marker([lat,lng],{icon:myIcon,zIndexOffset:1000})
+          .bindPopup('<b style="color:#ef4444">📍 현재 위치</b>')
+          .addTo(siteMapObj);
+      },()=>{},{enableHighAccuracy:true,timeout:8000,maximumAge:30000});
+    }
+    setTimeout(()=>siteMapObj.invalidateSize(),300);
+  }
+
+  if(window.L){buildMap();}
+  else{
+    const s=document.createElement('script');
+    s.src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+    s.onload=buildMap;
+    document.head.appendChild(s);
+    const css=document.createElement('link');
+    css.rel='stylesheet';
+    css.href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+    document.head.appendChild(css);
+  }
+}
+
+function toggleMapLayer(key){
+  const btn=document.getElementById('maplayer-'+key);
+  const layer=siteMapLayers[key];
+  if(!layer||!siteMapObj)return;
+  const col=MAP_LAYERS.find(l=>l.key===key)?.color||'#888';
+  if(siteMapObj.hasLayer(layer)){
+    siteMapObj.removeLayer(layer);
+    btn.style.background='transparent';
+    btn.style.color=col;
+  } else {
+    siteMapObj.addLayer(layer);
+    btn.style.background=col;
+    btn.style.color='#fff';
+  }
+}
+
+// 현장 상태 변경 후 마커 레이어 갱신
+function refreshMapLayers(){
+  if(!siteMapObj||!window.L)return;
+  const L=window.L;
+  // 기존 레이어 제거
+  MAP_LAYERS.forEach(l=>{
+    if(siteMapLayers[l.key]){
+      siteMapObj.removeLayer(siteMapLayers[l.key]);
+    }
+  });
+  // 레이어 버튼 현재 on/off 상태 파악
+  const layerOn={};
+  MAP_LAYERS.forEach(l=>{
+    const btn=document.getElementById('maplayer-'+l.key);
+    layerOn[l.key]=!btn||btn.style.background!=='transparent';
+  });
+  // 새로 마커 생성
+  MAP_LAYERS.forEach(l=>{
+    const layerSites=allSites.filter(s=>!isCompleted(s.id)&&getSiteLayer(s)===l.key&&s.lat&&s.lng);
+    const markers=layerSites.map(s=>{
+      const marker=L.circleMarker([s.lat,s.lng],{
+        radius:7,fillColor:l.color,color:'#fff',weight:2,opacity:1,fillOpacity:0.9
+      });
+      marker.bindPopup(`
+        <b style="font-size:13px;display:block;margin-bottom:4px">${s.name}</b>
+        <span style="font-size:12px;color:#666;display:block;margin-bottom:8px">${s.address}</span>
+        <button onclick="openDetailFromMap('${s.id}')"
+          style="width:100%;height:34px;border:none;background:#f59e0b;color:#000;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif">
+          📋 상세 보기
+        </button>`);
+      return marker;
+    });
+    siteMapLayers[l.key]=L.featureGroup(markers);
+    if(layerOn[l.key]!==false)siteMapObj.addLayer(siteMapLayers[l.key]);
+    // 버튼 숫자 갱신
+    const btn=document.getElementById('maplayer-'+l.key);
+    if(btn)btn.textContent=btn.textContent.replace(/\d+$/,layerSites.length);
+  });
+}
+
+function renderAll(){
+  const now=new Date();
+  const days=['일','월','화','수','목','금','토'];
+  document.getElementById('today-date').innerHTML=`${now.getFullYear()}년 <span>${now.getMonth()+1}월 ${now.getDate()}일</span> (${days[now.getDay()]})`;
+  renderRegionGrid('region-grid',currentRegion,'setRegion');
+  renderRegionGrid('list-region-grid',listRegion,'setListRegion');
+  renderRecommend();renderList();renderSettings();
+  syncTypeTabUI();syncRecTabUI();syncStatusTabUI();syncWorkTabUI();
+  // 마지막 화면 복원
+  restoreLastView();
+}
+
+function restoreLastView(){
+  const lastView=localStorage.getItem('last_view');
+  if(lastView&&lastView!=='rec') showView(lastView);
+  // 상세화면 복원 — 티맵에서 돌아왔을 때
+  const lastDetailId=localStorage.getItem('last_detail_id');
+  if(lastDetailId){
+    const site=allSites.find(s=>s.id===lastDetailId);
+    if(site){
+      setTimeout(()=>{
+        openDetail(lastDetailId);
+        showToast('📍 이전 화면으로 복원됐습니다');
+      },400);
+    } else {
+      localStorage.removeItem('last_detail_id');
+    }
+  }
+}
+
+// ===================== TOAST =====================
+let _tt;
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(_tt);_tt=setTimeout(()=>t.classList.remove('show'),2500);}
+
+// ===================== INIT =====================
+async function init(){
+  // 비밀번호 확인 먼저
+  showLockIfNeeded();
+  if(!isAuthenticated()) return; // 잠금 상태면 이후 진행 안 함
+
+  // URL 체크를 DB보다 먼저 — DB 오류가 나도 URL 화면 안 뜨게
+  const hasUrl=!!localStorage.getItem('apps_script_url');
+  if(hasUrl) document.getElementById('setup-screen').classList.add('hidden');
+
+  try{
+    db=await openDB();
+    await dbDel('cache','rawData');
+    const allStatus=await dbAll('status');
+    siteStatus=new Map(allStatus.map(r=>[r.id,r.status||'미확인']));
+    // supStatus, visitDate, completedAt도 복원
+    allStatus.forEach(r=>{
+      if(r.supStatus) siteSupStatus.set(r.id,r.supStatus);
+      if(r.visitDate) siteVisitDate.set(r.id,r.visitDate);
+      if(r.completedAt) siteCompletedAt.set(r.id,r.completedAt);
+    });
+    const allPriority=await dbAll('priority').catch(()=>[]);
+    priorityIds=new Set(allPriority.filter(r=>r.on).map(r=>r.id));
+    await loadMemos().catch(()=>{});
+  }catch(e){
+    console.error('DB 초기화 오류 (무시하고 계속):', e);
+  }
+  loadCriteria();
+  renderHeader();
+  if(hasUrl){
+    await loadData();
+  } else {
+    renderAll();
+  }
+}
+init();
+</script>
+</body>
+</html>
